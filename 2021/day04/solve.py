@@ -8,6 +8,7 @@ import sys
 class Board:
     def __init__(self, lines):
         self.boards = lines
+        self.finished = False
 
     def done(self, line, seen):
         return all([x in seen for x in line])
@@ -47,10 +48,13 @@ while lines:
 print(len(boards))
 seen = set()
 for n in numbers:
-    seen.add(n)
+    seen.add(n)   
+    todo = [b for b in boards if not b.finished]
+
     for board in boards:
         el = board.entire_line(seen)
         if el:
-            print(el)
-            print(board.sum_unmarked(seen) * n)
-            sys.exit(0)
+            board.finished = True
+            if len(todo) == 1 and board == todo[0]:
+                print('done', todo[0].sum_unmarked(seen) * n)
+                sys.exit(0)
