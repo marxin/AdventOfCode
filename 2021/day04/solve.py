@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
-from itertools import takewhile, dropwhile
+from itertools import takewhile
 
 import os
 import sys
+
 
 class Board:
     def __init__(self, lines):
@@ -31,6 +32,7 @@ class Board:
                     s += v
         return s
 
+
 folder = os.path.dirname(os.path.abspath(__file__))
 data = open(os.path.join(folder, 'input.txt')).read()
 lines = data.splitlines()
@@ -48,7 +50,7 @@ while lines:
 print(len(boards))
 seen = set()
 for n in numbers:
-    seen.add(n)   
+    seen.add(n)
     todo = [b for b in boards if not b.finished]
 
     for board in boards:
