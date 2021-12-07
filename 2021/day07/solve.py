@@ -13,8 +13,11 @@ values = [int(x) for x in lines[0].split(',')]
 
 best = sys.maxsize
 
+def fuel(distance):
+    return (1 + distance) * distance // 2
+
 for position in range(max(values) + 1):
-    suma = sum(abs(x - position) for x in values)
+    suma = sum(fuel(abs(x - position)) for x in values)
     if suma < best:
         best = suma
 
