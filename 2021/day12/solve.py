@@ -23,7 +23,7 @@ for line in lines:
 
 total = 0
 
-def find_path(point, seen):
+def find_path(point, seen, twice):
     global total
 
     if point == 'end':
@@ -35,13 +35,14 @@ def find_path(point, seen):
             elif neighbor.lower() == neighbor:
                 if neighbor not in seen:
                     seen.add(neighbor)
-                    find_path(neighbor, seen)
+                    find_path(neighbor, seen, twice)
                     seen.remove(neighbor)
-
+                elif not twice:
+                    find_path(neighbor, seen, True)
             else:
-                find_path(neighbor, seen)
+                find_path(neighbor, seen, twice)
 
 
 print(d)
-find_path('start', set())
+find_path('start', set(), False)
 print(total)
