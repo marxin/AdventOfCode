@@ -42,7 +42,9 @@ def print_matrix():
 
 print_matrix()
 
-for _ in range(100):
+steps = 0
+while True:
+    steps += 1
     for y in range(Y):
         for x in range(X):
             data[(x, y)] += 1
@@ -52,8 +54,10 @@ for _ in range(100):
         for x in range(X):
             flash((x, y), flashed)
 
-    times += len(flashed)
+    
     for f in flashed:
         data[f] = 0
 
-print(times)
+    if len(flashed) == len(data):
+        print(steps)
+        break
