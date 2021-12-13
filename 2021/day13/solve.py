@@ -41,6 +41,10 @@ for direction, line in folding:
     else:
         assert False
     d = d2
-    break
 
-print(len(d))
+print(d)
+
+for y in range(20):
+    for x in range(60):
+        print('#' if (x, y) in d else '.', end='')
+    print()
