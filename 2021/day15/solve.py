@@ -23,7 +23,31 @@ for y, line in enumerate(lines):
         d[(x, y)] = int(v)
 
 start = (0, 0)
+TIMES = 5
+
+print(X, Y)
+# Extend the map
+for i in range(TIMES):
+    for j in range(TIMES):
+        if i == 0 and j == 0:
+            continue
+        for x in range(X):
+            for y in range(Y):
+                v = d[(x, y)] + i + j
+                if v > 9:
+                    v -= 9
+                pos = (X * i + x, Y * j + y)
+                assert pos[0] < X * TIMES
+                assert pos[1] < Y * TIMES
+                d[pos] = v
+
+X *= TIMES
+Y *= TIMES
+
+print(len(d))
+
 end = (X - 1, Y - 1)
+print(start, end)
 best = sys.maxsize
 cache = {}
 counter = 0
@@ -43,11 +67,9 @@ while heap:
 
     counter += 1
     if counter % 100000 == 0:
-        print(best, length, len(cache))
+        print(counter, best, length, len(cache), len(heap))
 
     if length >= best:
-        if not pos in cache:
-            cache[pos] = length
         continue
     elif pos in cache:
         if cache[pos] <= length:
