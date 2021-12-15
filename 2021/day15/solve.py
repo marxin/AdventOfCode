@@ -25,7 +25,6 @@ for y, line in enumerate(lines):
 start = (0, 0)
 TIMES = 5
 
-print(X, Y)
 # Extend the map
 for i in range(TIMES):
     for j in range(TIMES):
@@ -44,10 +43,7 @@ for i in range(TIMES):
 X *= TIMES
 Y *= TIMES
 
-print(len(d))
-
 end = (X - 1, Y - 1)
-print(start, end)
 best = sys.maxsize
 cache = {}
 counter = 0
