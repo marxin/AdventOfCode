@@ -4,19 +4,42 @@ import os
 import sys
 
 from collections import defaultdict, Counter
+from math import prod
 
 folder = os.path.dirname(os.path.abspath(__file__))
 data = open(os.path.join(folder, 'input.txt')).read()
 lines = data.splitlines()
 
 class Packet:
-    def __init__(self, version, value=None):
+    def __init__(self, version, type, value=None):
         self.value = value
         self.version = version
+        self.type = type
         self.children = []
 
     def get_version_sum(self):
         return self.version + sum(x.get_version_sum() for x in self.children)
+
+    def get_sum(self):
+        subvalues = [x.get_sum() for x in self.children]
+        if self.type == 4:
+            return self.value
+        elif self.type == 0:
+            return sum(subvalues)
+        elif self.type == 1:
+            return prod(subvalues)
+        elif self.type == 2:
+            return min(subvalues)
+        elif self.type == 3:
+            return max(subvalues)
+        elif self.type == 5:
+            return 1 if subvalues[0] > subvalues[1] else 0
+        elif self.type == 6:
+            return 1 if subvalues[0] < subvalues[1] else 0
+        elif self.type == 7:
+            return 1 if subvalues[0] == subvalues[1] else 0
+        else:
+            assert False
 
     def __repr__(self):
         return f'{self.version}/{self.value}: {self.children}'
@@ -48,14 +71,14 @@ def parse_line(line, parsen):
                 if stop:
                     break
             
-            elements.append(Packet(version, int(literal, 2)))
+            elements.append(Packet(version, type, int(literal, 2)))
             parsen -= 1
             if parsen == 0:
                 break
         else:
             ltype = line[0]
             line = line[1:]
-            p = Packet(version)
+            p = Packet(version, type)
             if ltype == '0':
                 length = int(line[:15], 2)
                 line = line[15:]
@@ -81,4 +104,4 @@ for line in lines:
     elements, _ = parse_line(hex, 0)
     root = elements[0]
     print(root)
-    print(root.get_version_sum())
+    print(root.get_version_sum(), root.get_sum())
