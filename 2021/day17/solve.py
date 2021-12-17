@@ -4,6 +4,7 @@ import os
 import sys
 
 from collections import defaultdict, Counter
+from typing import Sequence
 
 folder = os.path.dirname(os.path.abspath(__file__))
 data = open(os.path.join(folder, 'input.txt')).read()
@@ -13,6 +14,7 @@ y = y[2:].split('..')
 
 tstart = (int(x[0]), int(y[0]))
 tend = (int(x[1]), int(y[1]))
+print(tstart, tend)
 
 def step(velocity):
     x = velocity[0]
@@ -26,7 +28,8 @@ def isin(pos):
     return tstart[0] <= pos[0] <= tend[0] and tstart[1] <= pos[1] <= tend[1]
 
 def isout(pos):
-    return pos[0] > tend[0] or pos[1] < tend[1]
+    minimum = min(tstart[1], tend[1])
+    return pos[0] > tend[0] or pos[1] < minimum
 
 def shoot(velocity):
     position = (0, 0)
@@ -45,13 +48,14 @@ def shoot(velocity):
         velocity = step(velocity)
 
 
-best = 0
-
-RANGE = 100
+counter = 0
+RANGE = 300
 
 for x in range(RANGE):
-    for y in range(RANGE):
-        s = shoot((x, y))
-        if s[0] and s[1] > best:
-            best = s[1]
-            print(best)
+    for y in range(-RANGE, RANGE):
+        v = (x, y)
+        s = shoot(v)
+        if s[0]:
+            counter += 1
+
+print(counter)
