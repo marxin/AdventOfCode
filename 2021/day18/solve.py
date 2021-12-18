@@ -83,7 +83,6 @@ def calculate_magnitude(tokens):
             x = tokens[i + 1]
             y = tokens[i + 3]
             if tokens[i] == '[' and isinstance(x, int) and isinstance(y, int):
-                print(tostr(tokens))
                 tokens = tokens[:i] + [3 * x + 2 * y] + tokens[i + 5:]
                 modified = True
                 break
@@ -98,3 +97,18 @@ for line in lines[1:]:
 
 print(tostr(current))
 print(calculate_magnitude(current))
+print('== PART 2 ==')
+
+maximum = 0
+
+for i in range(len(lines)):
+    for j in range(len(lines)):
+        if i != j:
+            a = parse(lines[i])
+            b = parse(lines[j])
+            c = doactions(sum(a, b))
+            m = calculate_magnitude(c)
+            if m > maximum:
+                maximum = m
+
+print(maximum)
