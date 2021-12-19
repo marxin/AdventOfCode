@@ -36,7 +36,9 @@ class Scanner:
     def __init__(self, data):
         lines = data.splitlines()
         self.vectors = [tuple([int(x) for x in line.split(',')]) for line in lines[1:]]
-        # print('vec', len(self.vectors))
+        self.initialize()
+
+    def initialize(self):
         self.vectorsset = set(self.vectors)
         self.rotations = []
         for v in self.vectors:
@@ -45,6 +47,10 @@ class Scanner:
             assert len(f) == R
             assert len(f) == len(set(f))
             self.rotations.append(f)
+
+    def to_global(self, d, rotation):
+        self.vectors = [add(d, self.get(i, rotation)) for i in range(len(self.vectors))]
+        self.initialize()
 
     def get(self, nth, rotation):
         return self.rotations[nth][rotation]
@@ -78,8 +84,19 @@ data = open(os.path.join(folder, 'input.txt')).read()
 
 scanners = [Scanner(part) for part in data.split('\n\n')]
 
+seen = set([0])
+
 for i in range(len(scanners)):
     for j in range(len(scanners)):
-        if i < j:
+        if i != j and i in seen and j not in seen:
             r = scanners[i].find_all_overlaps(scanners[j])
-            print(i, j, r)
+            if r:
+                print(i, j, r)
+                scanners[j].to_global(*r)
+                seen.add(j)
+
+all = set()
+for s in scanners:
+    all |= set(s.vectors)
+
+print(len(all))
