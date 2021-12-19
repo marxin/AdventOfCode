@@ -34,6 +34,7 @@ def neg(v):
 
 class Scanner:
     def __init__(self, data):
+        self.start = (0, 0, 0)
         lines = data.splitlines()
         self.vectors = [tuple([int(x) for x in line.split(',')]) for line in lines[1:]]
         self.initialize()
@@ -48,9 +49,10 @@ class Scanner:
             assert len(f) == len(set(f))
             self.rotations.append(f)
 
-    def to_global(self, d, rotation):
+    def to_global(self, d, rotation, start):
         self.vectors = [add(d, self.get(i, rotation)) for i in range(len(self.vectors))]
         self.initialize()
+        self.start = d
 
     def get(self, nth, rotation):
         return self.rotations[nth][rotation]
@@ -92,12 +94,12 @@ while len(seen) != len(scanners):
     for i in range(len(scanners)):
         for j in range(len(scanners)):
             if i in seen and j not in seen and (i, j) not in tested:
-                print(i, j, 'seen:', len(seen))
+                # print(i, j, 'seen:', len(seen))
                 tested.add((i, j))
                 r = scanners[i].find_all_overlaps(scanners[j])
                 if r:
-                    # print(i, j, r)
-                    scanners[j].to_global(*r)
+                    print(i, j, r)
+                    scanners[j].to_global(*r, scanners[i].start)
                     seen.add(j)
 
 all = set()
@@ -105,3 +107,14 @@ for s in scanners:
     all |= set(s.vectors)
 
 print(len(all))
+
+maximum = 0
+for s1 in scanners:
+    for s2 in scanners:
+        if s1 != s2:
+            d = delta(s1.start, s2.start)
+            manh = abs(d[0]) + abs(d[1]) + abs(d[2])
+            if manh > maximum:
+                maximum = manh
+
+print(maximum)
