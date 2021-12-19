@@ -57,8 +57,9 @@ class Scanner:
 
     def find_overlaps(self, other, rotation):        
         N = len(other.vectors)
-        
-        for v0 in self.vectors:
+        M = len(self.vectors)        
+
+        for v0 in self.vectors[:M - 11]:
             for i in range(N):
                 v1 = other.get(i, rotation)
                 d = add(v0, neg(v1))
@@ -85,15 +86,19 @@ data = open(os.path.join(folder, 'input.txt')).read()
 scanners = [Scanner(part) for part in data.split('\n\n')]
 
 seen = set([0])
+tested = set()
 
-for i in range(len(scanners)):
-    for j in range(len(scanners)):
-        if i != j and i in seen and j not in seen:
-            r = scanners[i].find_all_overlaps(scanners[j])
-            if r:
-                print(i, j, r)
-                scanners[j].to_global(*r)
-                seen.add(j)
+while len(seen) != len(scanners):
+    for i in range(len(scanners)):
+        for j in range(len(scanners)):
+            if i in seen and j not in seen and (i, j) not in tested:
+                print(i, j, 'seen:', len(seen))
+                tested.add((i, j))
+                r = scanners[i].find_all_overlaps(scanners[j])
+                if r:
+                    # print(i, j, r)
+                    scanners[j].to_global(*r)
+                    seen.add(j)
 
 all = set()
 for s in scanners:
