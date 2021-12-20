@@ -36,18 +36,21 @@ def print_data(data):
         print()
     print()
 
-for _ in range(2):
+steps = 50
+more = 2 * steps
+
+for s in range(steps):
+    print(s)
     next_data = {}
-    for x in range(-100, W + 100):
-        for y in range(-100, H + 100):
+    for x in range(-more, W + more):
+        for y in range(-more, H + more):
             next_data[(x, y)] = mapping[get_index(x, y)]
 
-    print_data(next_data)
     data = next_data
 
 count = 0
-for x in range(-2, W + 2):
-    for y in range(-2, H + 2):
+for x in range(-steps, W + steps):
+    for y in range(-steps, H + steps):
         if data.get((x, y), '.') == '#':
             count += 1
 
