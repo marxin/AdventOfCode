@@ -2,14 +2,18 @@
 
 import os
 import sys
+import copy
 
+import collections
 from collections import defaultdict, Counter
+from heapq import *
 
 folder = os.path.dirname(os.path.abspath(__file__))
 data = open(os.path.join(folder, 'input.txt')).read()
 lines = data.splitlines()
 
-pos = [int(line.split()[-1]) for line in lines]
+start = [int(line.split()[-1]) for line in lines]
+pos = start.copy()
 score = [0,0]
 
 cube = 1
@@ -41,5 +45,52 @@ while not done:
             done = True
             break
 
-print(times)
-print(min(score) * times)
+print('Part1:', min(score) * times)
+
+dices = defaultdict(int)
+
+N = 3
+
+for i in range(1, N + 1):
+    for j in range(1, N + 1):
+        for k in range(1, N + 1):
+            dices[i + j + k] += 1
+
+start = (0, 0, *start, 0)
+THRESHOLD = 21
+
+cache = {}
+
+def investigate(state):
+    assert len(state) == 5
+    if state in cache:
+        return cache[state]
+
+    who = state[4]
+
+    if state[0] >= THRESHOLD:
+        return (1, 0)
+    elif state[1] >= THRESHOLD:
+        return (0, 1)
+
+    suma = (0, 0)
+    for dice, times in dices.items():
+        value = list(state).copy()
+        v = value[who + 2]
+        v += dice
+        if v > 10:
+            v -= 10
+        assert v <= 10
+        value[who] += v
+        value[who + 2] = v
+
+        value[4] = (who + 1) % 2
+        state2 = tuple(value)
+        p0, p1 = investigate(state2)
+        suma = (suma[0] + times * p0, suma[1] + times * p1)
+    cache[state] = suma
+    return suma
+
+r = investigate(start)
+print(r)
+print(max(r))
