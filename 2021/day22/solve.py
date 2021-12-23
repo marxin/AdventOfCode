@@ -116,13 +116,12 @@ for i in range(DIM):
 
 allcubes = []
 for x in range(len(sets[0]) - 1):
-    print(x)
     for y in range(len(sets[1]) - 1):
         for z in range(len(sets[2]) - 1):
-            start = ((sets[0][x], sets[1][y], sets[2][z]))
-            end = ((sets[0][x + 1], sets[1][y + 1], sets[2][z + 1]))
-            # cube = Box(start, end)
-            # allcubes.append(cube)
+            start = Point((sets[0][x], sets[1][y], sets[2][z]))
+            end = Point((sets[0][x + 1], sets[1][y + 1], sets[2][z + 1]))
+            cube = Box(start, end)
+            allcubes.append(cube)
 
 alltotal = sum([c.volume() for c in allcubes])
 print('All total', alltotal, 'Total:', total)
