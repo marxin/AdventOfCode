@@ -11,6 +11,16 @@ class Point:
         self.y = y
         self.z = z
 
+    def __getitem__(self, index):
+        if index == 0:
+            return self.x
+        elif index == 1:
+            return self.y
+        elif index == 2:
+            return self.z
+        else:
+            assert False
+
     def __repr__(self):
         return str((self.x, self.y, self.z))
 
@@ -33,6 +43,9 @@ lines = data.splitlines()
 N = 50
 d = set()
 
+minimum = [sys.maxsize, sys.maxsize, sys.maxsize]
+maximum = [-sys.maxsize, -sys.maxsize, -sys.maxsize]
+
 actions = []
 
 for i, line in enumerate(lines):
@@ -41,6 +54,10 @@ for i, line in enumerate(lines):
     actions.append((op, Box(coords)))
 
 for op, box in actions:
+    for i in range(3):
+        minimum[i] = min(box.start[i], minimum[i])
+        maximum[i] = max(box.end[i], maximum[i])
+
     for x in range(max(-N, box.start.x), min(N, box.end.x) + 1):
         for y in range(max(-N, box.start.y), min(N, box.end.y) + 1):
             for z in range(max(-N, box.start.z), min(box.end.z, N) + 1):
@@ -50,3 +67,7 @@ for op, box in actions:
                     d.discard((x, y, z))
 
 print(len(d))
+
+print(minimum)
+print(maximum)
+print(len(actions))
