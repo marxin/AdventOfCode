@@ -13,6 +13,10 @@ class Box:
         assert len(points) == DIM
         self.points = points
         self.on = on
+        self.start = self._start()
+        self.end = self._end()
+        self.end_minus_one = self._end_minus_one()
+        self.corners = list(self._get_corners())
 
         for d in range(DIM):
             assert len(points[d]) >= 2
@@ -35,7 +39,8 @@ class Box:
                 total += 1
         return total
 
-    def is_point_in(self, other, point):
+    @staticmethod
+    def is_point_in(other, point):
         for d in range(DIM):
             if other.points[d][0] <= point[d] < other.points[d][-1]:
                 pass
@@ -43,22 +48,28 @@ class Box:
                 return False
         return True
 
-    def start(self):
+    def _start(self):
         return [x[0] for x in self.points]
 
-    def end(self):
+    def _end(self):
         return [x[-1] for x in self.points]
 
-    def end_minus_one(self):
-        return [p - 1 for p in self.end()]
+    def _end_minus_one(self):
+        return [p - 1 for p in self.end]
 
     def points_in(self, other):
         inter = 0
-        if self.is_point_in(other, self.start()):
+        if self.is_point_in(other, self.start):
             inter += 1
-        if self.is_point_in(other, self.end_minus_one()):
+        if self.is_point_in(other, self.end_minus_one):
             inter += 1
         return inter
+
+    def has_corner_in(self, other):
+        for corner in self.corners:
+            if self.is_point_in(other, corner):
+                return True
+        return False
 
     def split8(self):
         result = []
@@ -76,6 +87,14 @@ class Box:
         # if result:
         #    assert sum(x.volume() for x in result) == self.volume()
         return result
+
+    def _get_corners(self):
+        points = [self.start, self.end_minus_one]
+
+        for x in (0, 1):
+            for y in (0, 1):
+                for z in (0, 1):
+                    yield (points[x][0], points[y][1], points[z][2])
 
     def __repr__(self):
         return f'Box[{self.start()}:{self.end()})'
@@ -120,6 +139,12 @@ for box in actions:
         minimum[d] = min(box.points[d][0], minimum[d])
         maximum[d] = max(box.points[d][-1] - 1, maximum[d])
 
+"""
+for box in actions:
+    for d in range(DIM):
+        minimum[d] = min(box.points[d][0], minimum[d])
+        maximum[d] = max(box.points[d][-1] - 1, maximum[d])
+
     for x in range(max(-N, box.points[0][0]), min(N, box.points[0][-1]) ):
         for y in range(max(-N, box.points[1][0]), min(N, box.points[1][-1])):
             for z in range(max(-N, box.points[2][0]), min(N, box.points[2][-1])):
@@ -127,7 +152,7 @@ for box in actions:
                     data.add((x, y, z))
                 else:
                     data.discard((x, y, z))
-print(sorted(data))
+"""
 
 actions = list(reversed(actions))
 
@@ -153,57 +178,54 @@ for d in range(DIM):
 
 megacube = Box(sets)
 assert megacube.volume() == total
-#print(megacube.volume(), megacube.subcube_count())
-#print()
-print([len(x) for x in megacube.points])
-
-worklist = [megacube]
-worklist2 = []
-
-while worklist:
-    cube = worklist.pop()
-    if cube.subcube_count() != 1:
-        worklist += cube.split8()
-    else:
-        worklist2.append(cube)
+total_volume = megacube.volume()
 
 calculated = 0
 counter = 0
 worklist = [megacube]
-found = []
+discovered = 0
+
+xx = 0
+yy = 0
 
 while worklist:
     counter += 1
-    if counter % 10000 == 0:
-        print(counter, calculated, 'toexpected:', calculated1 - calculated, len(worklist))
+    if counter % 1000 == 0:
+        print(counter, calculated, 'done:', f'{100.0 * discovered / total_volume:.3f} %', len(worklist), xx, yy)
     cube = worklist.pop()
-    print('testing', cube, cube.is_point_in(cube, (0, 1, 3)))
+    add_me = True
     for a in actions:
         inter = cube.points_in(a)
-        if inter == 0:
-            inter2 = a.points_in(cube)
-            if inter2 >= 1:
-                worklist += cube.split8()
-                break
-        elif inter == 2:
+        if inter == 2:
             if a.on:
-                print('..', cube, cube.volume())
                 calculated += cube.volume()
-                found.append(cube)
-            break
-        else:
-            worklist += cube.split8()
             break
 
-for d in data:
-    ff = False
-    for f in found:
-        if f.is_point_in(f, d):
-            ff = True
+        b0 = cube.has_corner_in(a)
+        b1 = a.has_corner_in(cube)
+        if b0:
+            xx += 1
+        if b1:
+            yy += 1
+        if b0 or b1:
+            worklist += cube.split8()
+            add_me = False
             break
-    if not ff:
-        print('missing', d)
-        assert False
+    if add_me:
+        discovered += cube.volume()
+    
 
 print(calculated)
-assert calculated == calculated1
+
+# for d in data:
+#     ff = False
+#     for f in found:
+#         if f.is_point_in(f, d):
+#             ff = True
+#             break
+#     if not ff:
+#         print('missing', d)
+#         assert False
+
+#print(calculated, calculated1)
+#assert calculated == calculated1
