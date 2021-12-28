@@ -49,13 +49,13 @@ class Box:
         return True
 
     def _start(self):
-        return [x[0] for x in self.points]
+        return tuple([x[0] for x in self.points])
 
     def _end(self):
-        return [x[-1] for x in self.points]
+        return tuple([x[-1] for x in self.points])
 
     def _end_minus_one(self):
-        return [p - 1 for p in self.end]
+        return tuple([p - 1 for p in self.end])
 
     def points_in(self, other):
         inter = 0
@@ -185,13 +185,10 @@ counter = 0
 worklist = [megacube]
 discovered = 0
 
-xx = 0
-yy = 0
-
 while worklist:
     counter += 1
-    if counter % 1000 == 0:
-        print(counter, calculated, 'done:', f'{100.0 * discovered / total_volume:.3f} %', len(worklist), xx, yy)
+    if counter % 10000 == 0:
+        print(counter, calculated, 'done:', f'{100.0 * discovered / total_volume:.3f} %', len(worklist), f'{100.0 * cube.volume() / total_volume:.4f} %')
     cube = worklist.pop()
     add_me = True
     for a in actions:
@@ -200,14 +197,7 @@ while worklist:
             if a.on:
                 calculated += cube.volume()
             break
-
-        b0 = cube.has_corner_in(a)
-        b1 = a.has_corner_in(cube)
-        if b0:
-            xx += 1
-        if b1:
-            yy += 1
-        if b0 or b1:
+        elif inter == 1 or a.points_in(cube) != 0 or cube.has_corner_in(a) or a.has_corner_in(cube):
             worklist += cube.split8()
             add_me = False
             break
