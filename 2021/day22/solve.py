@@ -59,6 +59,20 @@ class Box:
                 for z in (0, 1):
                     yield (points[x][0], points[y][1], points[z][2])
 
+    def maybe_conflict(self, other):
+        a_in_b = False
+
+        for d in range(DIM):
+            if self.start[d] <= other.start[d] <= other.end[d] < self.end[d]:
+                a_in_b = True
+                break
+        
+        for d in range(DIM):
+            if other.start[d] <= self.start[d] <= self.end[d] < other.end[d] and a_in_b:
+                return True
+
+        return False
+
     def __repr__(self):
         return f'Box[{self.start}:{self.end})'
 
@@ -110,8 +124,8 @@ for i, action in enumerate(actions):
                 assert action.points_in(enable) == 0
                 assert not action.has_corner_in(enable)
                 pass
-#            elif not enable.has_corner_in(action) and not action.has_corner_in(enable):
-#                enabled2.append(enable)
+            elif not enable.has_corner_in(action) and not action.has_corner_in(enable) and not enable.maybe_conflict(action):
+                enabled2.append(enable)
             else:
                 for split in get_cubes([action, enable]):
                     points_in_action = split.points_in(action)
@@ -128,5 +142,4 @@ for i, action in enumerate(actions):
     if action.on:
         enabled.append(action)
 
-print(enabled)
 print(sum([x.volume() for x in enabled]))
