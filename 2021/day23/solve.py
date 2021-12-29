@@ -21,21 +21,37 @@ def get_energy(c):
         return None
     return 10 ** (ord(c) - ord('A'))
 
-def get_houses_for(c):
+def get_my_column(c):
     assert c.isalpha()
     distance = ord(c) - ord('A')
-    return [(3 + distance * 2, 2), (3 + distance * 2, 3)]
+    return 3 + distance * 2
 
 def is_house_position(pos):
     return pos[1] >= 2
+
+def printmaze(atoms, steps):
+    print()
+    print(steps)
+    for y in range(5):
+        for x in range(13):
+            pos = (x, y)
+            if pos in atoms:
+                print(atoms[pos], end='')
+            elif pos in floor:
+                print('.', end='')
+            else:
+                print('#', end='')
+        print()
 
 def get_reachable(pos, atoms):
     origpos = pos
     queue = [pos]
     c = atoms[pos]
-    myhouse = get_houses_for(c)
-    if pos in myhouse:
-        return {}
+    mycol = get_my_column(c)
+    if pos[0] == mycol:
+        pos2 = (pos[0], pos[1] + 1)
+        if pos[1] == 3 or (pos2 in atoms and atoms[pos2] == c):
+            return {}
     
     leaving_house = is_house_position(pos)
 
@@ -59,15 +75,18 @@ def get_reachable(pos, atoms):
 
     if leaving_house:
         for pos2 in list(reachable.keys()):
-            if pos2 in myhouse:
+            if pos2[0] == mycol:
                 continue
-            elif pos2[1] == origpos[1]:
-                continue
-            elif is_house_position(pos2):
+            elif pos2[1] == origpos[1] or is_house_position(pos2):
                 del reachable[pos2]
     else:
         for pos2 in list(reachable.keys()):
-            if not is_house_position(pos2):
+            if is_house_position(pos2) and pos2[0] == mycol:
+                if pos2[1] == 2:
+                    pos3 = (pos2[0], pos2[1] + 3)
+                    if pos3 in atoms and atoms[pos3] != 'c':
+                        del reachable[pos2]
+            else:
                 del reachable[pos2]
 
     return reachable
@@ -75,12 +94,12 @@ def get_reachable(pos, atoms):
 def atoms_home(atoms):
     home = 0
     for pos, atom in atoms.items():
-        if pos in get_houses_for(atom):
+        if pos[0] == get_my_column(atom):
             home += 1
     return home
 
 for y, line in enumerate(lines):
-    for x, c in enumerate(line.strip()):
+    for x, c in enumerate(line):
         pos = (x, y)
         if get_energy(c):
             atoms[pos] = c
@@ -100,6 +119,8 @@ heapq.heappush(heap, ((ATOMS, 0, 0), atoms))
 counter = 0
 while heap:
     (tohome, steps, _), atoms = heapq.heappop(heap)
+
+    # printmaze(atoms, steps)
 
     key = tuple(sorted(atoms.items()))
     if key in cache:
