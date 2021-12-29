@@ -16,7 +16,9 @@ def get_val(registers, value):
 def run_program(lines, input):
     read = []
     registers = {'w': 0, 'x': 0, 'y': 0, 'z': 0}
-    for line in lines:
+
+    for i, line in enumerate(lines):
+        print(registers['z'])
         parts = line.split()
         opcode = parts[0]
         if opcode == 'inp':
@@ -27,6 +29,8 @@ def run_program(lines, input):
         else:
             a, b = parts[1:]
             assert a != 'w'
+            if b == 'w':
+                print(i, line, registers)
             if opcode == 'add':
                 registers[a] += get_val(registers, b)
             elif opcode == 'mul':
@@ -47,7 +51,7 @@ L = 14
 
 while True:
     digits = [random.randrange(1, 10) for _ in range(L)]
-    print(digits)
+    # print(digits)
     assert len(digits) == L
     r = run_program(lines, digits)
     if r == 0:
