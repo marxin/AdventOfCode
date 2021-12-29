@@ -17,7 +17,6 @@ class Box:
         self.end_minus_one = self._end_minus_one()
 
         self.on = on
-        self.enabled = False
         self.corners = list(self._get_corners())
 
     def volume(self):
@@ -70,7 +69,6 @@ lines = data.splitlines()
 b = Box([0, 0, 0], [1, 2, 3])
 assert b.volume() == 1 * 2 * 3
 
-N = 50
 data = set()
 actions = []
 enabled = []
@@ -82,57 +80,52 @@ for i, line in enumerate(lines):
     end = [x[1] + 1 for x in coords]
     actions.append(Box(start, end, op == 'on'))
 
-print('Actions:', len(actions))
-
-def get_cubes(enabled, action):
-    result = []
-    tosplit = []
-
-    for ena in enabled:
-        if ena.has_corner_in(action) and ena.points_in(action) != 2:
-            tosplit.append(ena)
-        else:
-            assert ena.enabled
-            result.append(ena)
-
+def get_cubes(cubes):
     points = []
-    for c in tosplit + [action]:
+    for c in cubes:
         points += [c.start, c.end]
 
     x_values = sorted(set(p[0] for p in points))
     y_values = sorted(set(p[1] for p in points))
     z_values = sorted(set(p[2] for p in points))
 
-
+    result = []
     for x in range(len(x_values) - 1):
         for y in range(len(y_values) - 1):
             for z in range(len(z_values) - 1):
                 split = Box((x_values[x], y_values[y], z_values[z]), (x_values[x + 1], y_values[y + 1], z_values[z + 1]))
-                for ena in tosplit:
-                    result.append(split)
-                    if split.points_in(ena) == 2:
-                        split.enabled = True
-                        break
+                result.append(split)
     return result
 
+#print(len(actions))
 for i, action in enumerate(actions):
-    print(action)
-    print(i + 1, '/', len(actions), len(enabled))
+    # print(action)
+    # print(i + 1, '/', len(actions), len(enabled))
 
     if enabled:
         enabled2 = []
-        splits = get_cubes(enabled, action)
-        for split in splits:
-            if action.on:
-                if split.enabled or split.points_in(action) == 2:
-                    split.enabled = True
-                    enabled2.append(split)
+        for enable in enabled:
+            if enable.points_in(action) == 2:
+                assert action.points_in(enable) == 0
+                assert not action.has_corner_in(enable)
+                pass
+            elif not enable.has_corner_in(action) and not action.has_corner_in(enable):
+                enabled2.append(enable)
             else:
-                if split.enabled and not split.has_corner_in(action):
-                    split.enabled = True
-                    enabled2.append(split)
+                for split in get_cubes([action, enable]):
+                    points_in_action = split.points_in(action)
+                    points_in_enable = split.points_in(enable)
+                    if points_in_action == 2:
+                        pass
+                    elif points_in_enable == 2:
+                        assert points_in_action == 0
+                        enabled2.append(split)
+                    else:
+                        assert points_in_action == 0 and points_in_enable == 0
+
         enabled = enabled2
-    elif action.on:
+    if action.on:
         enabled.append(action)
 
-print(sum())
+print(enabled)
+print(sum([x.volume() for x in enabled]))
