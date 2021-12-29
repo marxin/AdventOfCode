@@ -97,10 +97,11 @@ def get_cubes(cubes):
                 result.append(split)
     return result
 
-#print(len(actions))
+print('Actions', len(actions))
+
 for i, action in enumerate(actions):
-    # print(action)
-    # print(i + 1, '/', len(actions), len(enabled))
+    print(action)
+    print(i + 1, '/', len(actions), len(enabled))
 
     if enabled:
         enabled2 = []
