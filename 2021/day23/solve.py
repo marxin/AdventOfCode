@@ -75,16 +75,14 @@ def get_reachable(pos, atoms):
 
     if leaving_house:
         for pos2 in list(reachable.keys()):
-            if pos2[0] == mycol:
-                continue
-            elif pos2[1] == origpos[1] or is_house_position(pos2):
+            if is_house_position(pos2):
                 del reachable[pos2]
     else:
         for pos2 in list(reachable.keys()):
-            if is_house_position(pos2) and pos2[0] == mycol:
+            if pos2[0] == mycol:
                 if pos2[1] == 2:
-                    pos3 = (pos2[0], pos2[1] + 3)
-                    if pos3 in atoms and atoms[pos3] != 'c':
+                    pos3 = (pos2[0], 3)
+                    if pos3 in atoms and atoms[pos3] != c:
                         del reachable[pos2]
             else:
                 del reachable[pos2]
@@ -117,7 +115,11 @@ heapq.heapify(heap)
 heapq.heappush(heap, ((ATOMS, 0, 0), atoms))
 
 counter = 0
+i = 0
 while heap:
+    i += 1
+    if i % 100000 == 0:
+        print(i, len(heap), len(cache))
     (tohome, steps, _), atoms = heapq.heappop(heap)
 
     # printmaze(atoms, steps)
