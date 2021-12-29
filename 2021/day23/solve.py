@@ -12,7 +12,7 @@ lines = data.splitlines()
 
 MOVES = ((0, 1), (0, -1), (1, 0), (-1, 0))
 NOSTOP = set([(3 + 2 * x, 1) for x in range(4)])
-ATOMS = 8
+ATOMS = -1
 floor = set()
 atoms = {}
 
@@ -32,7 +32,7 @@ def is_house_position(pos):
 def printmaze(atoms, steps):
     print()
     print(steps)
-    for y in range(5):
+    for y in range(7):
         for x in range(13):
             pos = (x, y)
             if pos in atoms:
@@ -43,14 +43,24 @@ def printmaze(atoms, steps):
                 print('#', end='')
         print()
 
+IN_ROW = 4
+
+def all_below_ok(pos, c, atoms):
+    if pos[1] == IN_ROW + 1:
+        return True
+    for y in range(pos[1] + 1, IN_ROW + 2):
+        pos2 = (pos[0], y)
+        if pos2 not in atoms or atoms[pos2] != c:
+            return False
+    return True
+
 def get_reachable(pos, atoms):
     origpos = pos
     queue = [pos]
     c = atoms[pos]
     mycol = get_my_column(c)
     if pos[0] == mycol:
-        pos2 = (pos[0], pos[1] + 1)
-        if pos[1] == 3 or (pos2 in atoms and atoms[pos2] == c):
+        if all_below_ok(pos, c, atoms):
             return {}
     
     leaving_house = is_house_position(pos)
@@ -80,10 +90,8 @@ def get_reachable(pos, atoms):
     else:
         for pos2 in list(reachable.keys()):
             if pos2[0] == mycol:
-                if pos2[1] == 2:
-                    pos3 = (pos2[0], 3)
-                    if pos3 in atoms and atoms[pos3] != c:
-                        del reachable[pos2]
+                if not all_below_ok(pos2, c, atoms):
+                    del reachable[pos2]
             else:
                 del reachable[pos2]
 
@@ -108,7 +116,11 @@ for y, line in enumerate(lines):
 print(floor)
 print(atoms)
 
+ATOMS = len(atoms)
+
 best = sys.maxsize
+best_to_home = sys.maxsize
+
 cache = {}
 heap = []
 heapq.heapify(heap)
@@ -117,12 +129,15 @@ heapq.heappush(heap, ((ATOMS, 0, 0), atoms))
 counter = 0
 i = 0
 while heap:
-    i += 1
-    if i % 100000 == 0:
-        print(i, len(heap), len(cache))
+    i += 1    
     (tohome, steps, _), atoms = heapq.heappop(heap)
 
-    # printmaze(atoms, steps)
+    if tohome < best_to_home:
+        best_to_home = tohome
+
+    if i % 100000 == 0:
+        print(i, len(heap), len(cache), best_to_home)
+        # printmaze(atoms, steps)
 
     key = tuple(sorted(atoms.items()))
     if key in cache:
