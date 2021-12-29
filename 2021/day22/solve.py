@@ -110,8 +110,8 @@ for i, action in enumerate(actions):
                 assert action.points_in(enable) == 0
                 assert not action.has_corner_in(enable)
                 pass
-            elif not enable.has_corner_in(action) and not action.has_corner_in(enable):
-                enabled2.append(enable)
+#            elif not enable.has_corner_in(action) and not action.has_corner_in(enable):
+#                enabled2.append(enable)
             else:
                 for split in get_cubes([action, enable]):
                     points_in_action = split.points_in(action)
