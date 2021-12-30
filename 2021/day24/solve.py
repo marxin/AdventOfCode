@@ -4,56 +4,54 @@ import os
 import sys
 import random
 
+from itertools import product
 from collections import defaultdict, Counter
 
 folder = os.path.dirname(os.path.abspath(__file__))
 data = open(os.path.join(folder, 'input.txt')).read()
 lines = data.splitlines()
 
-def get_val(registers, value):
-    return int(value) if value not in registers else registers[value]
+N = 14
 
-def run_program(lines, input):
-    read = []
-    registers = {'w': 0, 'x': 0, 'y': 0, 'z': 0}
+assert len(lines) % N == 0
+part = len(lines) // N
+types = [[0, None] for _ in range(N)]
 
-    for i, line in enumerate(lines):
-        print(registers['z'])
-        parts = line.split()
-        opcode = parts[0]
-        if opcode == 'inp':
-            reg = parts[1]
-            registers[reg] = input[0]
-            read.append(input[0])
-            input = input[1:]
-        else:
-            a, b = parts[1:]
-            assert a != 'w'
-            if b == 'w':
-                print(i, line, registers)
-            if opcode == 'add':
-                registers[a] += get_val(registers, b)
-            elif opcode == 'mul':
-                registers[a] *= get_val(registers, b)
-            elif opcode == 'div':
-                registers[a] //= get_val(registers, b)
-            elif opcode == 'mod':
-                registers[a] %= get_val(registers, b)
-            elif opcode == 'eql':
-                registers[a] = 1 if get_val(registers, b) == registers[a] else 0
+for i in range(N):
+    chunk = lines[part * i:part * (i + 1)]
+    assert len(chunk) == part
+    if chunk[4] == 'div z 26':
+        types[i][0] = 2
+        types[i][1] = int(chunk[5].split()[-1])
+    else:
+        types[i][0] = 1
+        types[i][1] = int(chunk[-3].split()[-1])
+
+def solve(values):
+    result = []
+    z = 0
+    for i in range(N):
+        if types[i][0] == 1:
+            w = values[0]
+            values = values[1:]
+            result.append(w)
+            z = 26 * z + w + types[i][1]
+        elif types[i][0] == 2:
+            w = z % 26 + types[i][1]
+            if 1 <= w <= 9:
+                result.append(w)
+                z //= 26
             else:
-                assert False
+                return None
+        else:
+            raise RuntimeError
+    result = ''.join(str(x) for x in result)
+    return int(result)
 
-    assert not input
-    return registers['z']
 
-L = 14
-
-while True:
-    digits = [random.randrange(1, 10) for _ in range(L)]
-    # print(digits)
-    assert len(digits) == L
-    r = run_program(lines, digits)
-    if r == 0:
-        print('DONE:', start)
-        break
+max = 0
+for values in product(range(9, 0, -1), repeat=N // 2):
+    result = solve(values)
+    if result and result > max:
+        max = result
+        print(max)
