@@ -49,9 +49,16 @@ def solve(values):
     return int(result)
 
 
+min = sys.maxsize
 max = 0
+
 for values in product(range(9, 0, -1), repeat=N // 2):
     result = solve(values)
-    if result and result > max:
-        max = result
-        print(max)
+    if result is not None:
+        if result > max:
+            max = result
+        if result < min:
+            min = result
+
+print('Min:', min)
+print('Max:', max)
