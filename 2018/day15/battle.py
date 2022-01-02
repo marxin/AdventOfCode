@@ -78,7 +78,7 @@ class Unit:
         distance = closest[1]
         if distance == sys.maxsize:
             return
-        print('Closest for %s%d -> %s%d (distance: %d)' % (self.type, self.id, closest[0].type, closest[0].id, distance))
+        # rint('Closest for %s%d -> %s%d (distance: %d)' % (self.type, self.id, closest[0].type, closest[0].id, distance))
         if distance > 1:
             newpos = self.move_to_closest_enemy(map, units, closest[0], distance)
             if newpos != None:
@@ -104,8 +104,6 @@ class Unit:
         return list(reversed(self.position))
 
 lines = open('input.txt').readlines()
-map = set()
-units = []
 
 def print_map(rounds):
     print('\nAfter %d rounds:' % rounds)
@@ -128,6 +126,9 @@ def print_map(rounds):
             print(' %s(%d)' % (colored(x.type + str(x.id), x.get_color()), x.hp), end = '')
         print()
 
+map = set()
+units = []
+
 unit_id = 0
 for y, l in enumerate(lines):
     l = l.strip()
@@ -139,20 +140,20 @@ for y, l in enumerate(lines):
             unit_id += 1
 
 print_map(0)
+print('Before fight units:', len(units))
 for i in range(1, 500):
     for unit in list(sorted(units, key = lambda x: x.order())):
         types = set([u.type for u in units])
         if len(types) == 1:
-            print('End of the fight!')
+            print('End of the fight, remaining units:', len(units))
             hps = sum([u.hp for u in units])
             print(hps)
             print(i - 1)
             print(hps * (i - 1))
+            print_map(i)
             exit(0)
         if unit.hp <= 0:
             assert not unit in units
             continue
         unit.move(map, units)
         unit.fight(map, units)
-
-    print_map(i)
