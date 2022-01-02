@@ -43,7 +43,7 @@ class Unit:
                     if not newpos in flood and not get_unit_by_position(units, newpos):
                         flood[newpos] = steps
                         queue.append(newpos)
-        return list(sorted(enemies.values(), key = lambda x: x[1]))[0]
+        return list(sorted(enemies.values(), key = lambda x: (x[1], x[0].order())))[0]
 
     def try_one_move(self, map, units, start, distance):
         flood = {}
