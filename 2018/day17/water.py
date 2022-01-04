@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import re
 import sys
 from PIL import Image, ImageDraw
@@ -10,7 +11,9 @@ water = set()
 tips = deque([(500, 0)])
 sprinkle = set([(500, 0)])
 
-for line in open('input.txt').readlines():
+folder = os.path.dirname(os.path.abspath(__file__))
+
+for line in open(os.path.join(folder, 'input.txt')).readlines():
     line = line.strip()
     m = re.match('y=(.*), x=(.*)\.\.(.*)', line)
     if m:
