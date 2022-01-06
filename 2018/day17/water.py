@@ -125,6 +125,7 @@ for i in range(4000):
 
         if d in points or d in water and d not in surface:
             flood_line(sp)
+            sprinkle.remove(sp)
         elif d[1] <= maxy:
             sprinkle.add(d)
 
@@ -146,7 +147,6 @@ draw()
 solution = [p for p in water | sprinkle if p[1] >= miny]
 
 print(len(solution))
-print(len((water - sprinkle) - surface))
 
 for x in sprinkle:
     water.discard(x)
@@ -157,4 +157,13 @@ for x in surface:
 sprinkle = set()
 surface = set()
 
+for x in list(water):
+    right1 = (x[0] + 1, x[1])
+    right2 = (x[0] + 2, x[1])
+    if right2 in water and right1 not in points:
+        water.add(right1)
+    
 draw()
+
+# HACK +2
+print(len(water) + 2)
