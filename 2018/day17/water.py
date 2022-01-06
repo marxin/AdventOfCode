@@ -5,13 +5,16 @@ import re
 import sys
 from PIL import Image, ImageDraw
 from collections import deque
+import json
+
+folder = os.path.dirname(os.path.abspath(__file__))
+# xxx = json.load(open(os.path.join(folder, 'points.txt')))
+# xxx = set(tuple(x) for x in xxx['points'])
 
 points = set()
 water = set()
-tips = deque([(500, 0)])
 sprinkle = set([(500, 0)])
-
-folder = os.path.dirname(os.path.abspath(__file__))
+surface = set()
 
 for line in open(os.path.join(folder, 'input.txt')).readlines():
     line = line.strip()
@@ -30,6 +33,8 @@ for line in open(os.path.join(folder, 'input.txt')).readlines():
     for y in range(y1, y2 + 1):
         points.add((x, y))
 
+maxy = max(p[1] for p in points)
+
 width = 1000
 height = 0
 
@@ -38,7 +43,7 @@ for p in points:
         height = p[1]
 
 def draw():
-    height = 300
+    height = 3000
     im = Image.new('RGB', (width, height + 10), (255, 255, 255))
     draw = ImageDraw.Draw(im)
 
@@ -48,66 +53,95 @@ def draw():
         draw.point(w, fill = (0, 0, 256))
     for s in sprinkle:
         draw.point(s, fill = (0, 256, 256))
+    for s in surface:
+        draw.point(s, fill = (256, 0, 0))
     im.save('water.png')
 
-def can_flood(fall):
-    if not fall in water:
-        return True
-    for step in [1, -1]:
-        i = 1
-        while True:
-            p = (fall[0] + i * step, fall[1])
-            if p not in water:
-                break
-            elif p in sprinkle:
-                p2 = (p[0], p[1] - 1)
-                if p2 not in sprinkle:
-                    return False
-            i += 1
-    return True
+def down(pos):
+    return (pos[0], pos[1] + 1)
 
-def fill_level_up(tip):
-    new_water = [tip]
-    overflow = False
-    for step in [1, -1]:
-        i = 1
-        while True:
-            p = (tip[0] + i * step, tip[1])
-            if p in points:
-                break
-            pdown = (p[0], p[1] + 1)
-            if pdown in points or pdown in water:
-                new_water.append(p)
-            else:
-                tips.append(p)
-                sprinkle.add(p)
-                overflow = True
-                break
-            i += 1
-    for w in new_water:
-        water.add(w)
-    if not overflow:
-        upper = (tip[0], tip[1] - 1)
-        if upper in sprinkle:
-            tips.append(upper)
+def flood_line_direction(start, direction, level):
+    water.add(start)
+    i = 0
 
-stop = -1
-if len(sys.argv) == 2:
-    stop = int(sys.argv[1])
+    while True:
+        pos = (start[0] + i * direction, start[1])
+        if pos in points:
+            return False
+        else:
+            level.add(pos)
+            d = down(pos)
+            if d not in water and d not in points:
+                sprinkle.add(pos)
+                level.remove(pos)
+                return True
+        i += 1
 
-step = 1
-while tips:
-    print(step)
-    step += 1
-    if step == stop:
-        break
-    tip = tips.popleft()
-    fall = (tip[0], tip[1] + 1)
-    if fall in points or fall in water:
-        if can_flood(fall):
-            fill_level_up(tip)
-    else:
-        sprinkle.add(fall)
-        tips.append(fall)
 
+def can_remove_flood(pos):
+    i = 0
+    level = set()
+    while True:
+        i += 1
+        pos2 = (pos[0] + i, pos[1])
+        if pos2 in points:
+            break
+        elif pos2 not in water:
+            return set()
+        else:
+            level.add(pos2)
+
+    i = 0
+    while True:
+        i -= 1
+        
+        pos2 = (pos[0] + i, pos[1])
+        if pos2 in points:
+            break
+        elif pos2 not in water:
+            return set()
+        else:
+            level.add(pos2)
+    return level
+
+
+def flood_line(start):
+    global water, surface
+
+    level = set()
+    overflow = flood_line_direction(start, 1, level)
+    overflow |= flood_line_direction(start, -1, level)
+    assert start in level
+    water = water | level
+    if overflow:
+        surface = surface | level
+
+for i in range(4000):
+    before = len(sprinkle) + len(water)    
+
+    for sp in list(sprinkle):
+        d = down(sp)
+        if sp in water:
+            continue
+
+        if d in points or d in water and d not in surface:
+            flood_line(sp)
+        elif d[1] <= maxy:
+            sprinkle.add(d)
+
+    after = len(sprinkle) + len(water)
+    diff = after - before
+    if not diff:
+        for sur in list(surface):
+            removed = can_remove_flood(sur)
+            surface -= removed
+
+    print(i, after - before)
+        
 draw()
+solution = water | sprinkle
+
+for s in solution:
+    assert s not in points
+
+print(len(solution))
