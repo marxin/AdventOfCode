@@ -5,17 +5,13 @@ import re
 import sys
 from PIL import Image, ImageDraw
 from collections import deque
-import json
-
-folder = os.path.dirname(os.path.abspath(__file__))
-# xxx = json.load(open(os.path.join(folder, 'points.txt')))
-# xxx = set(tuple(x) for x in xxx['points'])
 
 points = set()
 water = set()
 sprinkle = set([(500, 0)])
 surface = set()
 
+folder = os.path.dirname(os.path.abspath(__file__))
 for line in open(os.path.join(folder, 'input.txt')).readlines():
     line = line.strip()
     m = re.match('y=(.*), x=(.*)\.\.(.*)', line)
@@ -33,6 +29,7 @@ for line in open(os.path.join(folder, 'input.txt')).readlines():
     for y in range(y1, y2 + 1):
         points.add((x, y))
 
+miny = min(p[1] for p in points)
 maxy = max(p[1] for p in points)
 
 width = 1000
@@ -55,6 +52,7 @@ def draw():
         draw.point(s, fill = (0, 256, 256))
     for s in surface:
         draw.point(s, fill = (256, 0, 0))
+
     im.save('water.png')
 
 def down(pos):
@@ -116,6 +114,7 @@ def flood_line(start):
     if overflow:
         surface = surface | level
 
+last_zero = False
 for i in range(4000):
     before = len(sprinkle) + len(water)    
 
@@ -132,16 +131,30 @@ for i in range(4000):
     after = len(sprinkle) + len(water)
     diff = after - before
     if not diff:
+        if last_zero:
+            break
+        last_zero = True
         for sur in list(surface):
             removed = can_remove_flood(sur)
             surface -= removed
+    else:
+        last_zero = False
 
     print(i, after - before)
         
 draw()
-solution = water | sprinkle
-
-for s in solution:
-    assert s not in points
+solution = [p for p in water | sprinkle if p[1] >= miny]
 
 print(len(solution))
+print(len((water - sprinkle) - surface))
+
+for x in sprinkle:
+    water.discard(x)
+
+for x in surface:
+    water.discard(x)
+
+sprinkle = set()
+surface = set()
+
+draw()
