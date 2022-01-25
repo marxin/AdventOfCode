@@ -67,7 +67,7 @@ class Or:
                 self.parts.append('')
             parts = parts[1:]
 
-    def __repr__(self):
+    def __repr2__(self):
         return 'Or' + str(self.parts)
 
 def parse_tokens(text):
@@ -93,11 +93,18 @@ def parse_tokens(text):
 nodes = None
 edges = None
 
-def walk(pos, tokens, final=True):
+cache = set()
+
+def walk(pos, tokens, final=True):    
     nodes.add(pos)
+    origpos = pos
 
     if not tokens:
         return pos
+
+    key = (pos, str(tokens))
+    if key in cache:
+        return
 
     token = tokens[0]
     tokens = tokens[1:]
@@ -118,6 +125,8 @@ def walk(pos, tokens, final=True):
             walk(pos, tokens)
     elif isinstance(token, list):
         walk(pos, token + tokens)
+
+    cache.add(key)
     return pos
 
 start = (0, 0)
