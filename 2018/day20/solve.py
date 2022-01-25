@@ -136,7 +136,6 @@ def get_distance(path):
     nodes = set()
     edges = set()
     tokens = parse_tokens(path)
-    print(tokens)
     walk(start, tokens)
 
     flood = {start: 0}
