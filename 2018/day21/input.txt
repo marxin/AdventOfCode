@@ -1,3 +1,4 @@
+#ip 3
 seti 123 0 4
 bani 4 456 4
 eqri 4 72 4
