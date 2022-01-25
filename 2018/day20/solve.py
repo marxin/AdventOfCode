@@ -4,81 +4,11 @@ import os
 import sys
 
 import sys
-sys.setrecursionlimit(15000)
 
-from itertools import product, permutations
+sys.setrecursionlimit(1500)
+
+from itertools import product, permutations, takewhile
 from collections import defaultdict, Counter, deque
-
-from sympy import FallingFactorial
-
-class Or:
-    def __init__(self, parts):
-        self.parts = []
-        for p in parts:
-            print(len(p))
-            if len(p) < 100:
-                print(p)
-            element = list(parse(p))
-            self.parts.append(element)
-
-    def __repr__(self):
-        return 'Or(' + ''.join(str(x) for x in self.parts) + ')'
-
-def parse(line):
-    start = None
-    if '(' in line:
-        start = line.index('(')
-    if '|' in line:
-        start2 = line.index('|')
-        if not start or start2 < start:
-            start = start2
-
-    if start is None:
-        if line:
-            yield line
-        return
-
-    if line[start] == '(':
-        if start != 0:
-            before = line[:start]
-            yield before
-            line = line[start:]
-
-        paren = 0
-        for i in range(len(line)):
-            if line[i] == '(':
-                paren += 1
-            elif line[i] == ')':
-                paren -= 1
-            if paren == 0:
-                p1 = list(parse(line[1:i]))
-                p2 = list(parse(line[i + 1:]))
-                if p1:
-                    yield p1
-                if p2:
-                    yield p2
-                return
-    elif line[start] == '|':
-        parts = []
-
-        paren = 0
-        while line:
-            for i in range(len(line)):
-                if line[i] == '|' and paren == 0:
-                    parts.append(line[:i])
-                    line = line[i + 1:]
-                    break
-                if line[i] == '(':
-                    paren += 1
-                elif line[i] == ')':
-                    paren += 1
-
-                if i == len(line) - 1:
-                    parts.append(line)
-                    line = ''
-        yield Or(parts)
-    else:
-        assert False
 
 MOVES = {
     'N': (0, 1),
@@ -86,6 +16,79 @@ MOVES = {
     'S': (0, -1),
     'W': (-1, 0)
 }
+
+def tokenize(text):
+    pare = 0
+    part = ''
+    for c in text:
+        if c == '(':
+            if pare == 0 and part:
+                yield part
+                part = ''
+            part += c
+            pare += 1
+        elif c == ')':
+            part += c
+            pare -= 1
+            if pare == 0:
+                yield part
+                part = ''
+        elif c == '|' and pare == 0:
+            if part:
+                yield part
+                part = ''
+            yield c
+        else:
+            part += c
+    if part:
+        yield part
+
+def get_tokens(text):
+    if text == '':
+        return [text]
+
+    tokens = list(tokenize(text))
+    if tokens[-1] == '|':
+        tokens.append('')
+    return tokens
+
+class Or:
+    def __init__(self, parts):
+        self.parts = []
+
+        while parts:
+            chunk = list(takewhile(lambda x: x != '|', parts))
+            element = parse_tokens(''.join(chunk))
+            self.parts.append(element)
+            parts = parts[len(chunk):]
+
+            # ending with '|', add emptry option
+            if parts == ['|']:
+                self.parts.append('')
+            parts = parts[1:]
+
+    def __repr__(self):
+        return 'Or' + str(self.parts)
+
+def parse_tokens(text):
+    tokens = get_tokens(text)
+    print(len(text))
+    if '|' in tokens:
+        return [Or(tokens)]
+    elif len(tokens) == 1:
+        token = tokens[0]
+        if token.startswith('('):
+            return parse_tokens(token[1:-1])
+        else:
+            return [token]
+    
+    result = []
+    for token in tokens:
+        if '(' in token or '|' in token:
+            result.append(parse_tokens(token))
+        else:
+            result.append(token)
+    return result
 
 nodes = None
 edges = None
@@ -124,7 +127,8 @@ def get_distance(path):
 
     nodes = set()
     edges = set()
-    tokens = list(parse(path))
+    tokens = parse_tokens(path)
+    print(tokens)
     walk(start, tokens)
 
     flood = {start: 0}
@@ -142,8 +146,22 @@ def get_distance(path):
                     flood[pos2] = steps + 1
                     todo.append(pos2)
     assert len(flood) == len(nodes)
-    print(max(flood.values()))
+    print(max(flood.values()))    
 
+
+#print(parse_tokens('(A(B|)|C)|D'))
+
+# get_distance('WNE')
+get_distance('ENWWW(NEEE|SSE(EE|N))')
+get_distance('ENNWSWW(NEWS|)SSSEEN(WNSE|)EE(SWEN|)NNN')
+get_distance('WSSEESWWWNW(S|NENNEEEENN(ESSSSW(NWSW|SSEN)|WSWWN(E|WWS(E|SS))))')
+
+folder = os.path.dirname(os.path.abspath(__file__))
+data = open(os.path.join(folder, 'input.txt')).read()
+
+get_distance(data[1:-1])
+
+"""
 xxx = '(ESSESSENN(SSWNNWESSENN|)|N)|W'
 get_distance(xxx)
 get_distance('ENWWW(NEEE|SSE(EE|N))')
@@ -154,3 +172,4 @@ folder = os.path.dirname(os.path.abspath(__file__))
 data = open(os.path.join(folder, 'input.txt')).read()
 
 get_distance(data[1:-1])
+"""
