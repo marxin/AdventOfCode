@@ -72,7 +72,6 @@ class Or:
 
 def parse_tokens(text):
     tokens = get_tokens(text)
-    print(len(text))
     if '|' in tokens:
         return [Or(tokens)]
     elif len(tokens) == 1:
@@ -158,27 +157,15 @@ def get_distance(path):
     print(max(flood.values()))    
 
 
-#print(parse_tokens('(A(B|)|C)|D'))
-
-# get_distance('WNE')
+"""
+print(parse_tokens('(A(B|)|C)|D'))
+get_distance('WNE')
 get_distance('ENWWW(NEEE|SSE(EE|N))')
 get_distance('ENNWSWW(NEWS|)SSSEEN(WNSE|)EE(SWEN|)NNN')
 get_distance('WSSEESWWWNW(S|NENNEEEENN(ESSSSW(NWSW|SSEN)|WSWWN(E|WWS(E|SS))))')
+"""
 
 folder = os.path.dirname(os.path.abspath(__file__))
 data = open(os.path.join(folder, 'input.txt')).read()
 
 get_distance(data[1:-1])
-
-"""
-xxx = '(ESSESSENN(SSWNNWESSENN|)|N)|W'
-get_distance(xxx)
-get_distance('ENWWW(NEEE|SSE(EE|N))')
-get_distance('ENNWSWW(NEWS|)SSSEEN(WNSE|)EE(SWEN|)NNN')
-get_distance('ESSWWN(E|NNENN(EESS(WNSE|)SSS|WWWSSSSE(SW|NNNE)))')
-
-folder = os.path.dirname(os.path.abspath(__file__))
-data = open(os.path.join(folder, 'input.txt')).read()
-
-get_distance(data[1:-1])
-"""
