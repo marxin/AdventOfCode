@@ -154,7 +154,8 @@ def get_distance(path):
                     flood[pos2] = steps + 1
                     todo.append(pos2)
     assert len(flood) == len(nodes)
-    print(max(flood.values()))    
+    print('Part 1:', max(flood.values()))
+    print('Part 2:', len([x for x in flood.values() if x >= 1000]))
 
 
 """
