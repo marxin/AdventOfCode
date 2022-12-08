@@ -3,8 +3,9 @@
 import os
 import sys
 
-from itertools import product, permutations
 from collections import defaultdict, Counter
+from itertools import product, permutations
+from functools import reduce
 
 MOVES = ((1, 0), (0, -1), (-1, 0), (0, 1))
 
