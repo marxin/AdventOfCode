@@ -14,11 +14,12 @@ data = open(os.path.join(folder, 'input.txt')).read()
 lines = data.splitlines()
 
 data = {}
-H = len(lines)
-W = len(lines[0])
 
 ip = 0
 increments = defaultdict(int)
+
+X = 40
+Y = 6
 
 for y, line in enumerate(lines):
     parts = line.split()
@@ -34,9 +35,23 @@ def get_n(increments, n):
     x = 1
     for i in range(n):
         x += increments[i]
-    return x * n
+    return x
 
 total = 0
 for i in range(20, 220 + 1, 40):
-    total += get_n(increments, i)
+    total += get_n(increments, i) * i
 print(total)
+
+pixels = []
+
+for y in range(Y):
+    for x in range(X):
+        val = get_n(increments, (x + 1) + (y * X))
+        if abs(val - x) <= 1:
+            pixels.append('#')
+        else:
+            pixels.append('.')
+
+print()
+for y in range(Y):
+    print(''.join(pixels[y * X:(y + 1) * X]))
