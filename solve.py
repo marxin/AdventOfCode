@@ -10,8 +10,8 @@ from functools import reduce
 MOVES = ((1, 0), (0, -1), (-1, 0), (0, 1))
 
 folder = os.path.dirname(os.path.abspath(__file__))
-data = open(os.path.join(folder, 'input.txt')).read()
-lines = data.splitlines()
+input = open(os.path.join(folder, 'input.txt')).read()
+lines = input.splitlines()
 
 data = {}
 H = len(lines)
