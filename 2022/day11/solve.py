@@ -23,6 +23,7 @@ monkeys = []
 def fn(old, op, arg):
     return op(old, arg if isinstance(arg, int) else old)
 
+common = 1
 
 for chunk in data.split('\n\n'):
     lines = chunk.strip().splitlines()
@@ -34,16 +35,18 @@ for chunk in data.split('\n\n'):
     
     m['lambda'] = (op, 'x' if statement[-1] == 'old' else int(statement[-1]))
     m['div'] = int(lines[3].split()[-1])
+    common *= m['div']
     m['throw'] = (int(lines[4].split()[-1]), int(lines[5].split()[-1]))
     m['total'] = 0
     monkeys.append(m)
 
-for _ in range(20):
+print(common)
+for i in range(10000):
     for m in monkeys:
         newitems = []
         items = list(sorted(m['items']))
         for item in items:
-            newitem = fn(item, *m['lambda']) // 3
+            newitem = fn(item, *m['lambda']) % common
             index = m['throw'][int(newitem % m['div'] != 0)]
             monkeys[index]['items'].append(newitem)
         m['items'] = []
