@@ -5,7 +5,7 @@ import sys
 
 from collections import defaultdict, Counter
 from itertools import product, permutations, chain
-from functools import reduce
+from functools import reduce, cmp_to_key
 
 MOVES = ((1, 0), (0, -1), (-1, 0), (0, 1))
 
@@ -51,3 +51,17 @@ for i, item in enumerate(items):
     # print(i + 1, left, right, r)
 
 print(suma)
+
+input += '\n[[2]]\n'
+input += '[[6]]'
+
+packets = [eval(x) for x in input.split() if x]
+
+packets = [str(x) for x in sorted(packets, key=cmp_to_key(cmp))]
+
+i1 = packets.index('[[2]]') + 1
+i2 = packets.index('[[6]]') + 1
+
+# print('\n'.join(packets))
+
+print(i1 * i2)
