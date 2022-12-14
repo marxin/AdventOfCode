@@ -37,15 +37,14 @@ start_points = len(points)
 
 while True:
     p = START
-    while True:
-        if p[1] == maxy:
-            print('done', len(points) - start_points)
-            sys.exit(0)
+    if p in points:
+        break            
 
+    while True:      
         candidates = ((p[0], p[1] + 1), (p[0] - 1, p[1] + 1), (p[0] + 1, p[1] + 1))
         moved = False
         for cand in candidates:
-            if cand not in points:
+            if cand not in points and cand[1] <= maxy:
                 p = cand
                 moved = True
                 break
@@ -54,3 +53,5 @@ while True:
             # we are done with this part
             points.add(p)
             break
+
+print('done', len(points) - start_points)
