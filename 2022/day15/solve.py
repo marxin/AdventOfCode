@@ -41,7 +41,9 @@ for y, line in enumerate(lines):
     sensors[(x, y)] = abs(x - x2) + abs(y - y2)
     beacons.add((x2, y2))
 
+print(sensors.values())
 maxd = max(sensors.values()) + 1
+print(sum(sensors.values()))
 
 rangex = (min(xs), max(xs))
 rangey = (min(ys), max(ys))
@@ -49,19 +51,36 @@ rangey = (min(ys), max(ys))
 print(rangex, rangey, maxd)
 print(sensors)
 
-Y = 10
-Y = 2000000
-
-total = 0
-for x in range(rangey[0] - maxd, rangey[1] + maxd):
-    p = (x, Y)
-    if p in beacons:
-        continue
-
-    no = False
+def in_sensor(p):
     for s, d in sensors.items():
         if dist(p, s) <= d:
-            total += 1
-            break
+            return True
+    return False
 
-print(total)
+MAXIMUM = 4000000
+
+print('== part 2 ===')
+print('sensors', len(sensors))
+
+for i, (s, d) in enumerate(sensors.items()):
+    print(i, '/', len(sensors), s, d)
+    d += 1
+
+    for x in range(d):
+        p = (s[0] + x, s[1] + d - x)
+        p2 = (s[0] + x, s[1] - (d - x))
+
+        p3 = (s[0] - x, s[1] + d - x)
+        p4 = (s[0] - x, s[1] - (d - x))
+
+        points = (p, p2, p3, p4)
+        for point in points:
+            if point[0] < 0 or point[0] > MAXIMUM:
+                continue
+            if point[1] < 0 or point[1] > MAXIMUM:
+                continue
+
+            if not in_sensor(point):
+                print('HOORAY')
+                print(point)
+                print(point[0] * MAXIMUM + point[1])
