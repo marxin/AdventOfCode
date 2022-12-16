@@ -4,10 +4,16 @@ import os
 import sys
 
 from collections import defaultdict, Counter
-from itertools import product, permutations, chain
+from itertools import product, permutations, chain, combinations
 from functools import reduce
 
 sys.setrecursionlimit(30000)
+
+def powerset(iterable):
+    "powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
+    s = list(iterable)
+    return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
+
 
 MOVES = ((1, 0), (0, -1), (-1, 0), (0, 1))
 
@@ -56,14 +62,10 @@ def find_closes_paths(start):
 for v in tunnels.keys():
     paths[v] = find_closes_paths(v)
 
-best = 0
-
-def find(pos, time, total, enabled):
-    global best
+def find(pos, time, total, enabled, maximum):
     if time <= 0 or len(enabled) == len(valveset):
-        if total > best:
-            print(total, enabled)
-            best = total
+        if total > maximum[0]:
+            maximum[0] = total
     else:
         for c in valveset - enabled:
             distance = paths[pos][c]
@@ -72,8 +74,30 @@ def find(pos, time, total, enabled):
             total2 += max(0, time2 * valves[c])
 
             enabled.add(c)
-            find(c, time2, total2, enabled)
+            find(c, time2, total2, enabled, maximum)
             enabled.remove(c)
 
-find('AA', 30, 0, set())
-print(best)
+best = [0]
+find('AA', 30, 0, set(), best)
+print(best[0])
+
+splits = list(powerset(valveset))
+
+totalbest = 0
+
+for i, split in enumerate(splits):
+    split = set(split)
+    split2 = valveset - split
+    
+    best1 = [0]
+    best2 = [0]
+    find('AA', 26, 0, split, best1)
+    find('AA', 26, 0, split2, best2)
+    t = best1[0] + best2[0]
+    if t > totalbest:
+        totalbest = t
+        print(i, '/', len(splits))
+        print(list(split), list(split2))
+        print('BEST', totalbest)
+
+print(totalbest)
