@@ -60,12 +60,12 @@ best = 0
 
 def find(pos, time, total, enabled):
     global best
-    if time <= 0:
+    if time <= 0 or len(enabled) == len(valveset):
         if total > best:
             print(total, enabled)
             best = total
     else:
-        for c in list(valveset - enabled):
+        for c in valveset - enabled:
             distance = paths[pos][c]
             time2 = time - distance - 1
             total2 = total
