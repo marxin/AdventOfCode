@@ -7,6 +7,8 @@ from collections import defaultdict, Counter
 from itertools import product, permutations, chain
 from functools import reduce
 
+sys.setrecursionlimit(1000)
+
 MOVES = ((1, 0), (0, -1), (-1, 0), (0, 1))
 
 folder = os.path.dirname(os.path.abspath(__file__))
