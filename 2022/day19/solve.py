@@ -3,8 +3,9 @@
 import os
 import sys
 import concurrent.futures
+import operator
 
-from collections import defaultdict, Counter
+from collections import Counter
 from itertools import product, permutations, chain
 from functools import reduce
 
@@ -27,12 +28,12 @@ for i, line in enumerate(lines):
     needs[3] = {0: int(parts[4][3]), 2: int(parts[4][-2])}
     blueprints.append(needs)
 
-TIME = 24
+N = 4
+TIME = 32
 GEODE = 3
-MAXPOP = 6
 
-# TRY
-MAXPOP = 20
+# TODO: hack2
+MAXPOP = 13
 
 def canbuy(robot, mined):
     for k, v in robot.items():
@@ -41,23 +42,35 @@ def canbuy(robot, mined):
     return True
 
 def mine(robots, mined):
-    for robot, n in robots.items():
-        mined[robot] += n
+    for i in range(N):
+        mined[i] += robots[i]
+
+
+def is_cache_better(cached, mined):
+    for i in range(N):
+        if cached[i] < mined[i]:
+            return False
+    return True
+
 
 def get_maximum(cache, blueprint, robots, mined, time, maximum):
+    key = (tuple(robots), tuple(mined), time)
+    if key in cache:
+        if is_cache_better(cache[key], mined):
+            return 
 
-    key = (tuple(robots.items()), tuple(mined.items()), time)
-    t = cache.get(key)
-    if t and t >= time:
+    # TODO: hack
+    if robots[0] >= 7:
         return
 
-    if mined[0] > 10:
-        return
+    # TODO: hack
+    # if mined[0] > 10:
+    #    return
 
     if time == 0:
         if mined[GEODE] > maximum[0]:
             maximum[0] = mined[GEODE]
-            # print('.. new maximum', maximum[0], robots, max(robots.values()))
+            print('.. new maximum', maximum[0], robots, 'cache len', len(cache))
         return
     
     # try to buy a robot
@@ -79,27 +92,35 @@ def get_maximum(cache, blueprint, robots, mined, time, maximum):
 
             get_maximum(cache, blueprint, robots2, mined2, time - 1, maximum)
 
+    tosave = mined.copy()
     mine(robots, mined)
     get_maximum(cache, blueprint, robots, mined, time - 1, maximum)
-    cache[key] = time
+
+    if key not in cache:
+        cache[key] = tosave
+    else:
+        if not is_cache_better(cache[key], tosave):
+            cache[key] = tosave
 
 
 def work(i, blueprint):
-    print('start', i)
+    # print('start', i)
     best = [0]
-    get_maximum({}, blueprint, defaultdict(int, {0: 1}), defaultdict(int), TIME, best)
+    get_maximum({}, blueprint, [1, 0, 0, 0], [0] * N, TIME, best)
     print(i, best[0])
-    return i * best[0]
+    return best[0]
 
 
-total = 0
 futures = []
 
-with concurrent.futures.ProcessPoolExecutor() as executor:
-    for i, blueprint in enumerate(blueprints):
+with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
+    for i, blueprint in enumerate(blueprints[::-1]):
         futures.append(executor.submit(work, i + 1, blueprint))
 
+    results = []
     for future in concurrent.futures.as_completed(futures):
-        total += future.result()
+        results.append(future.result())
 
-print(total)
+print(results)
+
+print(reduce(operator.mul, results))
