@@ -2,6 +2,7 @@
 
 import os
 import sys
+import concurrent.futures
 
 from collections import defaultdict, Counter
 from itertools import product, permutations, chain
@@ -43,20 +44,12 @@ def mine(robots, mined):
     for robot, n in robots.items():
         mined[robot] += n
 
-counter = 0
-
 def get_maximum(cache, blueprint, robots, mined, time, maximum):
-    global counter
-    counter += 1
 
     key = (tuple(robots.items()), tuple(mined.items()), time)
     t = cache.get(key)
     if t and t >= time:
         return
-
-    if counter % 10 ** 6 == 0:
-        pass
-        # print(counter, robots, mined, len(cache) / 10**6)
 
     if mined[0] > 10:
         return
@@ -64,7 +57,7 @@ def get_maximum(cache, blueprint, robots, mined, time, maximum):
     if time == 0:
         if mined[GEODE] > maximum[0]:
             maximum[0] = mined[GEODE]
-            print('.. new maximum', maximum[0], robots, max(robots.values()))
+            # print('.. new maximum', maximum[0], robots, max(robots.values()))
         return
     
     # try to buy a robot
@@ -90,13 +83,23 @@ def get_maximum(cache, blueprint, robots, mined, time, maximum):
     get_maximum(cache, blueprint, robots, mined, time - 1, maximum)
     cache[key] = time
 
-total = 0
 
-for i, blueprint in enumerate(blueprints):
-    print(i + 1, blueprint)
+def work(i, blueprint):
+    print('start', i)
     best = [0]
     get_maximum({}, blueprint, defaultdict(int, {0: 1}), defaultdict(int), TIME, best)
-    print('has best', best[0])
-    total += i * best[0]
+    print(i, best[0])
+    return i * best[0]
+
+
+total = 0
+futures = []
+
+with concurrent.futures.ProcessPoolExecutor() as executor:
+    for i, blueprint in enumerate(blueprints):
+        futures.append(executor.submit(work, i + 1, blueprint))
+
+    for future in concurrent.futures.as_completed(futures):
+        total += future.result()
 
 print(total)
