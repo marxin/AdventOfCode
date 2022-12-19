@@ -7,6 +7,8 @@ from collections import defaultdict, Counter
 from itertools import product, permutations, chain
 from functools import reduce
 
+sys.setrecursionlimit(1000)
+
 folder = os.path.dirname(os.path.abspath(__file__))
 input = open(os.path.join(folder, 'input.txt')).read()
 lines = input.splitlines()
@@ -26,72 +28,75 @@ for i, line in enumerate(lines):
 
 TIME = 24
 GEODE = 3
+MAXPOP = 6
 
+# TRY
+MAXPOP = 20
 
 def canbuy(robot, mined):
-    n = sys.maxsize
     for k, v in robot.items():
-        n = min(mined[k] // v, n)
-    return n
+        if mined[k] < v:
+            return False
+    return True
 
-counter = 0
-hits = 0
-nohits = 0
-
-def get_maximum(cache, blueprint, robots, mined, time, maximum):
-    global counter, hits, nohits
-    counter += 1
-    if counter % 100000 == 0:
-        print(counter, len(cache), hits / nohits)
-        print(time, robots, mined, maximum[0])
-
-    key = (tuple(robots.items()), tuple(mined.items()), time)
-    if key in cache:
-        hits += 1
-        return cache[key]
-    else:
-        nohits += 1
-    
-    if time == 0:
-        if mined[GEODE] > maximum[0]:
-            maximum[0] = mined[GEODE]
-            print('New maximum', maximum)
-        cache[key] = mined[GEODE]
-        return mined[GEODE]
-    
-    # mine first
+def mine(robots, mined):
     for robot, n in robots.items():
         mined[robot] += n
 
-    best = 0
+counter = 0
 
+def get_maximum(cache, blueprint, robots, mined, time, maximum):
+    global counter
+    counter += 1
+
+    key = (tuple(robots.items()), tuple(mined.items()), time)
+    t = cache.get(key)
+    if t and t >= time:
+        return
+
+    if counter % 10 ** 6 == 0:
+        pass
+        # print(counter, robots, mined, len(cache) / 10**6)
+
+    if mined[0] > 10:
+        return
+
+    if time == 0:
+        if mined[GEODE] > maximum[0]:
+            maximum[0] = mined[GEODE]
+            print('.. new maximum', maximum[0], robots, max(robots.values()))
+        return
+    
     # try to buy a robot
-    for robot, values in blueprint.items():
-        n = canbuy(values, mined)
-        for i in range(0, n + 1):
+    for robot in range(GEODE, -1, -1):
+        values = blueprint[robot]
+        if robots[robot] > MAXPOP:
+            continue
+
+        if canbuy(values, mined):
             robots2 = robots.copy()
             mined2 = mined.copy()
-
-            robots2[robot] += i
+            
             for x, y in values.items():
-                mined2[x] -= i * y
+                mined2[x] -= y
                 assert mined2[x] >= 0
-            
-            b = get_maximum(cache, blueprint, robots2, mined2, time - 1, maximum)
-            if b > best:
-                best = b
-            
-    b = get_maximum(cache, blueprint, robots.copy(), mined.copy(), time - 1, maximum)
-    if b > best:
-        best = b
 
-    cache[key] = best
-    return best
+            mine(robots2, mined2)            
+            robots2[robot] += 1
 
+            get_maximum(cache, blueprint, robots2, mined2, time - 1, maximum)
+
+    mine(robots, mined)
+    get_maximum(cache, blueprint, robots, mined, time - 1, maximum)
+    cache[key] = time
+
+total = 0
 
 for i, blueprint in enumerate(blueprints):
-    print(blueprint)
-    get_maximum({}, blueprint, defaultdict(int, {0: 1}), defaultdict(int), TIME, [0])
-    asdf
+    print(i + 1, blueprint)
+    best = [0]
+    get_maximum({}, blueprint, defaultdict(int, {0: 1}), defaultdict(int), TIME, best)
+    print('has best', best[0])
+    total += i * best[0]
 
-print(blueprints)
+print(total)
