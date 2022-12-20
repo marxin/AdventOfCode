@@ -3,7 +3,7 @@
 import os
 import sys
 
-from collections import defaultdict, Counter
+from collections import defaultdict, Counter, deque
 from itertools import product, permutations, chain
 from functools import reduce
 
@@ -11,8 +11,10 @@ sys.setrecursionlimit(1000)
 
 MOVES = ((1, 0), (0, -1), (-1, 0), (0, 1))
 
+FILENAME = 'sample.txt' if True else 'input.txt'
+
 folder = os.path.dirname(os.path.abspath(__file__))
-input = open(os.path.join(folder, 'input.txt')).read()
+input = open(os.path.join(folder, FILENAME)).read()
 lines = input.splitlines()
 
 data = {}
