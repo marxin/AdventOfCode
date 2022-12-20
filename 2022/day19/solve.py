@@ -33,7 +33,7 @@ TIME = 32
 GEODE = 3
 
 # TODO: hack2
-MAXPOP = 15
+MAXPOP = 12
 
 def canbuy(robot, mined):
     for k, v in robot.items():
@@ -60,22 +60,20 @@ def get_maximum(cache, blueprint, maxmines, robots, mined, time, maximum):
     counter += 1
 
     if counter % 10 ** 6 == 0:
-        print(counter, len(cache), hits / len(cache))
+        print(counter, time, robots, mined, len(cache), hits / len(cache))
 
     key = (tuple(robots), tuple(mined), time)
     if key in cache:
         hits += 1
         return
 
-    # TODO: hack
-    if all(maxmines[i] <= mined[i] for i in range(N - 1)):
-        cache.add(key)
-        return
+#    if any(mined[i] > maxmines[i] * 4 for i in range(N - 1)):
+#        return
 
     if time == 0:
         if mined[GEODE] > maximum[0]:
             maximum[0] = mined[GEODE]
-            print('.. new maximum', maximum[0], robots, 'cache len', len(cache))
+            print('.. new maximum', maximum[0], robots, mined, 'cache len', len(cache))
         return
     
     # try to buy a robot
@@ -100,6 +98,10 @@ def get_maximum(cache, blueprint, maxmines, robots, mined, time, maximum):
 
             get_maximum(cache, blueprint, maxmines, robots2, mined2, time - 1, maximum)
 
+    # TODO: hack
+    if all(maxmines[i] <= mined[i] for i in range(N - 1)):
+        return
+
     mine(robots, mined)
     get_maximum(cache, blueprint, maxmines, robots, mined, time - 1, maximum)
     cache.add(key)
@@ -119,6 +121,8 @@ def work(i, blueprint, maxmines):
 futures = []
 
 with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
+    print('Population limit', MAXPOP)
+    print()
     for i, blueprint in enumerate(blueprints):
         maxmines = [0] * (N - 1)
         for needs in blueprint.values():
