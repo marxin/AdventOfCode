@@ -17,32 +17,63 @@ lines = input.splitlines()
 
 numbers = []
 
+
+class Number:
+    def __init__(self, n):
+        self.n = n
+
+
 for y, line in enumerate(lines):
     n = int(line)
-    numbers.append(n)
+    numbers.append(Number(n))
 
 LEN = len(numbers)
-L2 = LEN - 1
+assert len(set(numbers)) == LEN
 
-for i, n in enumerate(numbers.copy()):
-    x = n % LEN
-    assert x < LEN
-    i = numbers.index(n)
-    i2 = (i + n) % L2
 
-    numbers = numbers[:i] + numbers[i + 1:]
-    numbers = numbers[:i2] + [n] + numbers[i2:]
-    print(i, n)
-    # print(numbers)
+def find_num(numbers, num):
+    for i in range(LEN):
+        if numbers[i] == num:
+            return i
+    assert False
 
-index = numbers.index(0)
+
+def norm(x):
+    while x >= LEN:
+        x -= LEN
+    while x <= -LEN:
+        x += LEN
+    return x
+
+candidates = numbers.copy()
+for j, n in enumerate(candidates):
+    print(j)
+    i = find_num(numbers, n)
+    i2 = i + n.n
+
+    if i2 > i:
+        for j in range(i, i2):
+            numbers[norm(j)] = numbers[norm(j + 1)]
+    else:
+        for j in range(i, i2, -1):
+            numbers[norm(j)] = numbers[norm(j - 1)]
+    numbers[norm(i2)] = n
+    # print([x.n for x in numbers])
+
+index = 0
+while True:
+    if numbers[index].n == 0:
+        break
+    index += 1
+
+print([x.n for x in numbers])
 print()
 print('zero index', index)
 
 total = 0
 for i in (1000, 2000, 3000):
-    i2 = (index + i) % LEN
-    print(i2, numbers[i2])
-    total += numbers[i2]
+    i2 = index + i
+
+    total += numbers[norm(i2)].n
 
 print('result', total)
