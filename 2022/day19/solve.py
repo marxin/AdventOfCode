@@ -33,7 +33,7 @@ TIME = 32
 GEODE = 3
 
 # TODO: hack2
-MAXPOP = 13
+MAXPOP = 15
 
 def canbuy(robot, mined):
     for k, v in robot.items():
@@ -52,20 +52,25 @@ def is_cache_better(cached, mined):
             return False
     return True
 
+counter = 0
+hits = 0
 
-def get_maximum(cache, blueprint, robots, mined, time, maximum):
+def get_maximum(cache, blueprint, maxmines, robots, mined, time, maximum):
+    global counter, hits
+    counter += 1
+
+    if counter % 10 ** 6 == 0:
+        print(counter, len(cache), hits / len(cache))
+
     key = (tuple(robots), tuple(mined), time)
     if key in cache:
-        if is_cache_better(cache[key], mined):
-            return 
-
-    # TODO: hack
-    if robots[0] >= 7:
+        hits += 1
         return
 
     # TODO: hack
-    # if mined[0] > 10:
-    #    return
+    if all(maxmines[i] <= mined[i] for i in range(N - 1)):
+        cache.add(key)
+        return
 
     if time == 0:
         if mined[GEODE] > maximum[0]:
@@ -79,6 +84,9 @@ def get_maximum(cache, blueprint, robots, mined, time, maximum):
         if robots[robot] > MAXPOP:
             continue
 
+        if robot != GEODE and robots[robot] >= maxmines[robot]:
+            continue
+
         if canbuy(values, mined):
             robots2 = robots.copy()
             mined2 = mined.copy()
@@ -90,23 +98,20 @@ def get_maximum(cache, blueprint, robots, mined, time, maximum):
             mine(robots2, mined2)            
             robots2[robot] += 1
 
-            get_maximum(cache, blueprint, robots2, mined2, time - 1, maximum)
+            get_maximum(cache, blueprint, maxmines, robots2, mined2, time - 1, maximum)
 
-    tosave = mined.copy()
     mine(robots, mined)
-    get_maximum(cache, blueprint, robots, mined, time - 1, maximum)
-
-    if key not in cache:
-        cache[key] = tosave
-    else:
-        if not is_cache_better(cache[key], tosave):
-            cache[key] = tosave
+    get_maximum(cache, blueprint, maxmines, robots, mined, time - 1, maximum)
+    cache.add(key)
 
 
-def work(i, blueprint):
-    # print('start', i)
+def work(i, blueprint, maxmines):
+    global counter, hits
+    counter = 0
+    hits = 0
+    print('start', i)
     best = [0]
-    get_maximum({}, blueprint, [1, 0, 0, 0], [0] * N, TIME, best)
+    get_maximum(set(), blueprint, maxmines, [1, 0, 0, 0], [0] * N, TIME, best)
     print(i, best[0])
     return best[0]
 
@@ -114,8 +119,13 @@ def work(i, blueprint):
 futures = []
 
 with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
-    for i, blueprint in enumerate(blueprints[::-1]):
-        futures.append(executor.submit(work, i + 1, blueprint))
+    for i, blueprint in enumerate(blueprints):
+        maxmines = [0] * (N - 1)
+        for needs in blueprint.values():
+            for key, value in needs.items():
+                maxmines[key] = max(maxmines[key], value)
+        print('Max mines', maxmines)
+        futures.append(executor.submit(work, i + 1, blueprint, maxmines))
 
     results = []
     for future in concurrent.futures.as_completed(futures):
