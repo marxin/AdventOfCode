@@ -2,6 +2,7 @@
 
 import os
 import sys
+import operator
 
 from collections import defaultdict, Counter, deque
 from itertools import product, permutations, chain
