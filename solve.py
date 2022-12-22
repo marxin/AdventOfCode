@@ -5,7 +5,7 @@ import sys
 import operator
 
 from collections import defaultdict, Counter, deque
-from itertools import product, permutations, chain
+from itertools import product, permutations, chain, takewhile, dropwhile
 from functools import reduce
 
 sys.setrecursionlimit(1000)
