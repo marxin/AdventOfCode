@@ -108,12 +108,10 @@ while True:
     data = data2
 
     bindex = (bindex + 1) % len(MOVES)
-    print_set(data)
-
-    if i == 10:
-        break
+    # print_set(data)
 
 dimx = max([p[0] for p in data]) - min([p[0] for p in data])
 dimy = max([p[1] for p in data]) - min([p[1] for p in data])
 
 print((dimx  + 1) * (dimy + 1) - len(data))
+print(i)
