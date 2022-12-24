@@ -15,6 +15,8 @@ SYMBOLS = ('>', '^', '<', 'v')
 
 FILENAME = 'sample.txt' if False else 'input.txt'
 
+SCD = 600 if FILENAME == 'input.txt' else 12
+
 folder = os.path.dirname(os.path.abspath(__file__))
 input = open(os.path.join(folder, FILENAME)).read()
 lines = input.splitlines()
@@ -24,8 +26,11 @@ W = len(lines[0])
 
 print('H:', H - 2, 'W:', W - 2)
 
-start = (1, 0)
-end = (W - 2, H - 1)
+START = (1, 0)
+start = START
+
+END = (W - 2, H - 1)
+end = END
 
 valid = set()
 blizzards = defaultdict(list)
@@ -71,14 +76,10 @@ def move_blizzards(blizzards):
     
     return blizzards2
 
-SCD = 600
-# SCD = 12
-
 valid_in_time = {}
 
 b2 = blizzards.copy()
 for i in range(SCD):
-    print(i)
     valid_in_time[i] = valid - set(b2.keys())
     b2 = move_blizzards(b2)
 
@@ -87,13 +88,30 @@ assert hash_dict(blizzards) == hash_dict(b2)
 known = {(start, 0): 0}
 worklist = deque([(start, 0)])
 
+times = []
+
 while worklist:
     p, b = worklist.popleft()
     steps = known[(p, b)]
 
     if p == end:
-        print('done', steps)
-        break
+        times.append(steps)
+        print(steps)
+        match len(times):
+            case 1:
+                start = END
+                end = START
+                known = {(start, b): steps}
+                worklist = deque([(start, b)])
+            case 2:
+                start = START
+                end = END
+                known = {(start, b): steps}
+                worklist = deque([(start, b)])
+            case _:
+                print('total', steps)
+                break
+                
 
     b = (b + 1) % SCD
 
