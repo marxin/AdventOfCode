@@ -13,7 +13,7 @@ sys.setrecursionlimit(1000)
 MOVES = ((1, 0), (0, -1), (-1, 0), (0, 1))
 SYMBOLS = ('>', '^', '<', 'v')
 
-FILENAME = 'sample.txt' if True else 'input.txt'
+FILENAME = 'sample.txt' if False else 'input.txt'
 
 folder = os.path.dirname(os.path.abspath(__file__))
 input = open(os.path.join(folder, FILENAME)).read()
@@ -22,7 +22,7 @@ lines = input.splitlines()
 H = len(lines)
 W = len(lines[0])
 
-print(H, W)
+print('H:', H - 2, 'W:', W - 2)
 
 start = (1, 0)
 end = (W - 2, H - 1)
@@ -41,8 +41,8 @@ for y, line in enumerate(lines):
         else:
             assert c == '#'
 
-print(blizzards)
-print(len(valid))
+# print(blizzards)
+# print(len(valid))
 
 
 def hash_dict(blizzards):
@@ -71,33 +71,42 @@ def move_blizzards(blizzards):
     
     return blizzards2
 
+SCD = 600
+# SCD = 12
 
-cache = {}
-best = sys.maxsize
+valid_in_time = {}
 
-def visit(p, b, steps):
-    global best
+b2 = blizzards.copy()
+for i in range(SCD):
+    print(i)
+    valid_in_time[i] = valid - set(b2.keys())
+    b2 = move_blizzards(b2)
+
+assert hash_dict(blizzards) == hash_dict(b2)
+
+known = {(start, 0): 0}
+worklist = deque([(start, 0)])
+
+while worklist:
+    p, b = worklist.popleft()
+    steps = known[(p, b)]
+
     if p == end:
-        if steps < best:
-            best = steps
-            print('New best', best)
+        print('done', steps)
+        break
 
-    state = (p, hash_dict(b))
-    if state in cache and cache[state] <= steps:
-        return
-
-    cache[state] = steps
-
-    # wait
-    moved = move_blizzards(b)
-
-    if p not in moved:
-        visit(p, moved, steps + 1)
+    b = (b + 1) % SCD
 
     # move in all directions
     for move in MOVES:
         p2 = (p[0] + move[0], p[1] + move[1])
-        if p2 in valid and p2 not in moved:
-            visit(p2, moved, steps + 1)
+        state = (p2, b)
+        if p2 in valid_in_time[b] and state not in known:
+            known[state] = steps + 1
+            worklist.append((p2, b))
 
-visit(start, blizzards, 0)
+    # wait
+    state = (p, b)
+    if p in valid_in_time[b] and state not in known:
+        known[state] = steps + 1
+        worklist.append((p, b))
