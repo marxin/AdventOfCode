@@ -2,7 +2,7 @@ use md5;
 
 const DIGITS: usize = 8;
 
-fn get_next_character(base: &str, start: u32, digits: & mut[char; DIGITS]) -> u32 {
+fn get_next_character(base: &str, start: u32, digits: &mut [char; DIGITS]) -> u32 {
     let mut i = start;
     loop {
         let candidate: String = format!("{base}{i}");
@@ -17,7 +17,7 @@ fn get_next_character(base: &str, start: u32, digits: & mut[char; DIGITS]) -> u3
                 digits[index] = value;
                 println!("[{index}] = {value}");
             }
-            return i
+            return i;
         }
         i += 1;
     }
@@ -35,7 +35,6 @@ fn main() {
             println!("{:?}", digits);
             break;
         }
-
     }
     println!("{}", String::from_iter(digits));
 }
