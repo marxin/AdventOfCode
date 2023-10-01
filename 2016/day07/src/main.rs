@@ -1,4 +1,4 @@
-use std::{fs, collections::HashSet};
+use std::{collections::HashSet, fs};
 
 fn supports_ssl(packet: &str) -> bool {
     let data: Vec<char> = packet.chars().collect();
@@ -9,8 +9,14 @@ fn supports_ssl(packet: &str) -> bool {
     for index in 0..data.len() - 2 {
         let c = data[index];
         match c {
-            '[' => {in_mask = true; continue; },
-            ']' => {in_mask = false; continue; }
+            '[' => {
+                in_mask = true;
+                continue;
+            }
+            ']' => {
+                in_mask = false;
+                continue;
+            }
             _ => {}
         }
 
