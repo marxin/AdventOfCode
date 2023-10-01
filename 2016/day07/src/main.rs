@@ -29,7 +29,7 @@ fn supports_ssl(packet: &str) -> bool {
         }
     }
 
-    inside.intersection(&outside).count() > 0
+    inside.intersection(&outside).next().is_some()
 }
 
 fn main() {
