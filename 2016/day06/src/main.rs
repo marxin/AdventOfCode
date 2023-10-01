@@ -10,8 +10,7 @@ fn main() {
             let c = line.chars().nth(i).unwrap();
             if dictionary.contains_key(&c) {
                 *dictionary.get_mut(&c).unwrap() += 1;
-            }
-            else {
+            } else {
                 dictionary.insert(c, 1);
             }
         }
