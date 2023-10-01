@@ -15,7 +15,7 @@ fn main() {
             }
         }
 
-        let most = dictionary.iter().max_by_key(|x| x.1).unwrap().0;
+        let most = dictionary.iter().min_by_key(|x| x.1).unwrap().0;
         print!("{}", most);
     }
 
