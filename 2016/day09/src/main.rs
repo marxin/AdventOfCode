@@ -15,7 +15,10 @@ fn get_code_length(data: &str) -> usize {
             let parts: Vec<_> = buffer.split(&['x']).collect();
             let nextn: usize = parts[0].parse().unwrap();
             let times: usize = parts[1].parse().unwrap();
-            counter += nextn * times - buffer.len();
+            let content = String::from_iter(vector.iter().skip(i + 1).take(nextn));
+            let child_len = get_code_length(&content);
+            counter += times * child_len;
+            counter -= buffer.len();
             i += nextn;
         } else {
             counter += 1;
@@ -31,8 +34,6 @@ fn get_code_length(data: &str) -> usize {
 fn main() {
     println!("{}", get_code_length(&fs::read_to_string("input.txt").unwrap().trim()));
     assert_eq!(get_code_length(&String::from("ADVENT")), 6);
-    assert_eq!(get_code_length(&String::from("A(2x2)BCD(2x2)EFG")), 11);
-    assert_eq!(get_code_length(&String::from("X(8x2)(3x3)ABCY")), 18);
-    assert_eq!(get_code_length(&String::from("(6x1)(1x3)A")), 6);
-
+    assert_eq!(get_code_length(&String::from("(27x12)(20x12)(13x14)(7x10)(1x12)A")), 241920);
+    assert_eq!(get_code_length(&String::from("(25x3)(3x3)ABC(2x3)XY(5x2)PQRSTX(18x9)(3x2)TWO(5x7)SEVEN")), 445);
 }
