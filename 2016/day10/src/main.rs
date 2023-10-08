@@ -6,6 +6,8 @@ struct Robot {
     done:  bool,
     lower: Option<usize>,
     higher: Option<usize>,
+    lower_output: Option<usize>,
+    higher_output: Option<usize>,
     values: Vec<usize>
 }
 
@@ -24,8 +26,12 @@ fn main() {
                 let id: usize = parts[1].parse().unwrap();
                 let mut lowid = None;
                 let mut highid = None;
+                let mut lower_output = None;
+                let mut higher_output = None;
                 match parts[5] {
-                    "output" => {}
+                    "output" => {
+                        lower_output = Some(parts[6].parse::<usize>().unwrap());
+                    }
                     "bot" => {
                         lowid = Some(parts[6].parse::<usize>().unwrap());
                     }
@@ -33,7 +39,9 @@ fn main() {
                     }
                 }
                 match parts[10] {
-                    "output" => {}
+                    "output" => {
+                        higher_output = Some(parts[11].parse::<usize>().unwrap());
+                    }
                     "bot" => {
                         highid = Some(parts[11].parse::<usize>().unwrap());
                     }
@@ -42,7 +50,7 @@ fn main() {
                     }
                 }
 
-                let robot = Robot { id, done: false, lower: lowid, higher: highid, values: vec![] };
+                let robot = Robot { id, done: false, lower: lowid, higher: highid, lower_output, higher_output, values: vec![] };
                 robots.insert(robot.id, robot);
             }
             _ => todo!()
@@ -54,6 +62,8 @@ fn main() {
         r.values.push(value);
     }
 
+    let mut vals = vec![];
+
      while robots.iter().any(|r| !r.1.done) {
         // println!("{:?}", robots);
         for i in 0..robots.len() {
@@ -62,10 +72,17 @@ fn main() {
                 robot.done = true;
                 robot.values.sort();
 
-                if robot.values == vec![17, 61] {
-                    print!("DONE={:?}", robot);
-                    exit(0);
+                if let Some(lower) = robot.lower_output {
+                    if lower < 3 {
+                        vals.push(robot.values[0]);
+                    }
                 }
+                if let Some(higher) = robot.higher_output {
+                    if higher < 3 {
+                        vals.push(robot.values[1]);
+                    }
+                }
+
                 let transform = [(robot.lower, robot.values[0]), (robot.higher, robot.values[1])];
 
                 for i in 0..2 {
@@ -77,5 +94,7 @@ fn main() {
         }
      }
 
-    
+     assert_eq!(vals.len(), 3);
+     println!("{:?}", vals);
+     println!("{}", vals.iter().fold(1, |acc, x| acc * x));
 }
