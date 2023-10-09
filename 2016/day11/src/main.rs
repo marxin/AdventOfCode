@@ -182,6 +182,8 @@ fn main() {
         counter += 1;
         if counter % 1000_000 == 0 {
             println!("{counter} / {}", memory.len());
+            println!("{steps}");
+            m.print(&short_namming);
         }
         if m == end {
             println!("steps={steps}");
