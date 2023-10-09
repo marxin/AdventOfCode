@@ -1,7 +1,7 @@
-use std::{fs, collections::HashMap, hash::Hash};
+use std::{fs, collections::{HashMap, HashSet, VecDeque}, hash::Hash};
 
 const FLOORS: usize = 4;
-const TYPES: usize = 5;
+const TYPES: usize = 7;
 const CHANGES: [i32; 2] = [-1, 1];
 
 #[derive(Debug, Clone, Copy)]
@@ -81,21 +81,8 @@ impl Map {
         subsets
     }
 
-    fn try_all_possibilites(&self, steps: usize, memory: & mut HashMap::<Map, usize>, short_namming: &Vec<char>) {
-        if steps > 50 {
-            return;
-        }
-        if memory.contains_key(self) {
-            let value = memory.get_mut(self).unwrap();
-            if steps >= *value {
-                return;
-            }
-            // update new minimum for the map
-            *value = steps;
-        }
-        else {
-            memory.insert(self.clone(), steps);
-        }
+    fn try_all_possibilites(&self, short_namming: &Vec<char>) -> Vec<Map> {
+        let mut results = Vec::new();
 
         for candidate in self.get_candidate_subsets() {
             for change in CHANGES {
@@ -115,11 +102,13 @@ impl Map {
                     }
                     // next.print(short_namming);
                     if next.is_valid() {
-                        next.try_all_possibilites(steps + 1, memory, short_namming);
+                        results.push(next);
                     }
                 }
             }            
         }
+
+        results
     }
 
     fn is_valid(&self) -> bool {
@@ -185,9 +174,25 @@ fn main() {
 
     assert_eq!(Map::new(), Map::new());
 
-    let mut memory = HashMap::new();
-    map.try_all_possibilites(0, & mut memory,&short_namming);
+    let mut memory = HashSet::new();
+    let mut queue = VecDeque::from([(0, map)]);
+    let end = Map::end();
+    let mut counter = 0;
+    while let Some((steps, m)) = queue.pop_front() {
+        counter += 1;
+        if counter % 1000_000 == 0 {
+            println!("{counter} / {}", memory.len());
+        }
+        if m == end {
+            println!("steps={steps}");
+            return;
+        }
+        if !memory.contains(&m) {
+            memory.insert(m.clone());
+            for c in m.try_all_possibilites(&short_namming) {
+                queue.push_back((steps + 1, c));
+            }
 
-    println!("memory size={}", memory.len());
-    println!("{}", memory.get(&Map::end()).unwrap());
+        }
+    }
 }
