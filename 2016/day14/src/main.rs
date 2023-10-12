@@ -4,15 +4,20 @@ use md5;
 
 const SALT: &str = "cuanljph";
 const KEY_LIMIT: usize = 64;
+const HASHING_REPEATS: usize = 2016 + 1;
 
 fn get_hash(index: usize) -> String {
-    let candidate: String = format!("{SALT}{index}");
-    let hash = md5::compute(candidate);
-    format!("{hash:x}")
+    let mut hash: String = format!("{SALT}{index}");
+
+    for _ in 0..HASHING_REPEATS {
+        hash = format!("{:x}", md5::compute(hash));
+    }
+
+    hash
 }
 
 fn first_triplet(i: usize, hash_map: & mut HashMap::<usize, String>) -> Option<char> {
-    let hash = hash_map.entry(i).or_insert(get_hash(i));
+    let hash = hash_map.entry(i).or_insert_with(|| get_hash(i));
 
     let chars: Vec<_> = hash.chars().collect();
     for i in 0..chars.len() - 2 {
@@ -28,7 +33,7 @@ fn next_thousand(start: usize, c: char, hash_map: & mut HashMap::<usize, String>
     let mut needle = String::from(c).repeat(5);
 
     for i in start..start + 1000 {
-        let hash = hash_map.entry(i).or_insert(get_hash(i));
+        let hash = hash_map.entry(i).or_insert_with(|| get_hash(i));
         if hash.contains(&needle) {
             return true;
         }
