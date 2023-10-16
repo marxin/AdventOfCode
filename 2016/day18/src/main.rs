@@ -16,7 +16,7 @@ fn get_next_row(input: Vec<char>) -> Vec<char> {
 
 fn main() {
     let input_str = ".^^^.^.^^^^^..^^^..^..^..^^..^.^.^.^^.^^....^.^...^.^^.^^.^^..^^..^.^..^^^.^^...^...^^....^^.^^^^^^^";
-    let mut input: Vec<_> = input_str.clone().chars().collect();
+    let mut input: Vec<_> = input_str.chars().collect();
     let mut total = 0;
 
     for _ in 0..400000 {
