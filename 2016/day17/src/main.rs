@@ -33,8 +33,8 @@ fn main() {
         let (steps, key, pos) = worklist.pop_front().unwrap();
         if pos == (LIMIT - 1, LIMIT - 1) {
             let result = String::from_iter(key.chars().skip(mykey.len()));
-            println!("Done in {steps} with key {result}");
-            break;
+            println!("Done in {steps}");
+            continue;
         }
 
         for (c, m) in get_moves(&key) {
