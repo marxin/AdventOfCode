@@ -34,14 +34,21 @@ fn main() {
     intervals.sort();
 
     let mut ip = 0;
+    let mut not_blocked = 0;
     for i in 0..intervals.len() {
         let interval = &intervals[i];
         if interval.contains(ip) {
             ip = cmp::max(ip, interval.end + 1);
         } else if ip < interval.start {
-            println!("found IP = {ip}");
-            break;
+            not_blocked += interval.start - ip;
+            println!("{}", interval.end);
+            ip = interval.end;
+            if ip != u32::MAX {
+                ip += 1;
+            }
         }
-
     }
+
+    println!("not blocked: {not_blocked}");
+    println!("{}", u32::MAX);
 }
