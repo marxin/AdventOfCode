@@ -19,7 +19,7 @@ fn main() {
     let mut input: Vec<_> = input_str.clone().chars().collect();
     let mut total = 0;
 
-    for _ in 0..40 {
+    for _ in 0..400000 {
         total += input.iter().filter(|&&c| c == '.').count();
         input = get_next_row(input);
     }
