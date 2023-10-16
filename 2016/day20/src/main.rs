@@ -41,7 +41,6 @@ fn main() {
             ip = cmp::max(ip, interval.end + 1);
         } else if ip < interval.start {
             not_blocked += interval.start - ip;
-            println!("{}", interval.end);
             ip = interval.end;
             if ip != u32::MAX {
                 ip += 1;
@@ -50,5 +49,4 @@ fn main() {
     }
 
     println!("not blocked: {not_blocked}");
-    println!("{}", u32::MAX);
 }
