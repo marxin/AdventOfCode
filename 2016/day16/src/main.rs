@@ -30,7 +30,7 @@ fn checksum(code: &Vec<bool>) -> Vec<bool> {
 fn main() {
     let key: Vec<bool> = "01000100010010111".chars().into_iter().map(|x| x == '1').collect();
 
-    let code = generate_dragon_code(key, 272);
-    print_code(&code);
+    let code = generate_dragon_code(key, 35651584);
+    // print_code(&code);
     print_code(&checksum(&code));
 }
