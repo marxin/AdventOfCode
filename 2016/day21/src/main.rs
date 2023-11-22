@@ -1,4 +1,4 @@
-use std::{fs, collections::VecDeque, ops::Index};
+use std::{collections::VecDeque, fs, ops::Index};
 
 #[derive(Debug)]
 enum Operation {
@@ -36,41 +36,45 @@ impl Operation {
                 let mut vec = vec.clone();
                 vec.swap(*source, *target);
                 vec
-            },
-            Self::SwapLetter { source_letter, target_letter } => {
-                vec.iter().map(|c| {
+            }
+            Self::SwapLetter {
+                source_letter,
+                target_letter,
+            } => vec
+                .iter()
+                .map(|c| {
                     if c == source_letter {
                         *target_letter
                     } else if c == target_letter {
                         *source_letter
                     } else {
                         *c
-                    }                    
-                }).collect()
-            },
+                    }
+                })
+                .collect(),
             Self::ReverseRange { start, end } => {
                 let mut result = VecDeque::new();
                 result.extend(vec.range(..start));
                 result.extend(vec.range(start..=end).rev());
                 result.extend(vec.range(end + 1..));
                 result
-            },
+            }
             Self::RotateLeft { n } => {
                 let mut vec = vec.clone();
                 vec.rotate_left(*n);
                 vec
-            },
+            }
             Self::RotateRight { n } => {
                 let mut vec = vec.clone();
                 vec.rotate_right(*n);
                 vec
-            },
+            }
             Self::MovePosition { index, insert } => {
                 let mut vec = vec.clone();
                 let c = vec.remove(*index).unwrap();
                 vec.insert(*insert, c);
                 vec
-            },
+            }
             Self::RotateOnPosition { letter } => {
                 let mut vec = vec.clone();
                 let mut position = vec.iter().position(|c| c == letter).unwrap();
@@ -91,15 +95,32 @@ fn parse_operations() -> Vec<Operation> {
     for line in fs::read_to_string("input.txt").unwrap().lines() {
         let parts: Vec<_> = line.split_whitespace().collect();
         let op = match (parts[0], parts[1]) {
-            ("swap", "position") =>
-                Operation::SwapPosition { source: parts[2].parse().unwrap(), target: parts.last().unwrap().parse().unwrap() },
-            ("swap", "letter") => Operation::SwapLetter { source_letter: parts[2].chars().next().unwrap(), target_letter: parts.last().unwrap().chars().next().unwrap() },
-            ("rotate", "left") => Operation::RotateLeft { n: parts[2].parse().unwrap() },
-            ("rotate", "right") => Operation::RotateRight { n: parts[2].parse().unwrap() },
-            ("rotate", "based") => Operation::RotateOnPosition { letter: parts.last().unwrap().chars().next().unwrap() },
-            ("reverse", "positions") => Operation::ReverseRange { start: parts[2].parse().unwrap(), end: parts[4].parse().unwrap() },
-            ("move", "position") => Operation::MovePosition { index: parts[2].parse().unwrap(), insert: parts.last().unwrap().parse().unwrap() },
-            _ => panic!("unsupported operation: {line}")
+            ("swap", "position") => Operation::SwapPosition {
+                source: parts[2].parse().unwrap(),
+                target: parts.last().unwrap().parse().unwrap(),
+            },
+            ("swap", "letter") => Operation::SwapLetter {
+                source_letter: parts[2].chars().next().unwrap(),
+                target_letter: parts.last().unwrap().chars().next().unwrap(),
+            },
+            ("rotate", "left") => Operation::RotateLeft {
+                n: parts[2].parse().unwrap(),
+            },
+            ("rotate", "right") => Operation::RotateRight {
+                n: parts[2].parse().unwrap(),
+            },
+            ("rotate", "based") => Operation::RotateOnPosition {
+                letter: parts.last().unwrap().chars().next().unwrap(),
+            },
+            ("reverse", "positions") => Operation::ReverseRange {
+                start: parts[2].parse().unwrap(),
+                end: parts[4].parse().unwrap(),
+            },
+            ("move", "position") => Operation::MovePosition {
+                index: parts[2].parse().unwrap(),
+                insert: parts.last().unwrap().parse().unwrap(),
+            },
+            _ => panic!("unsupported operation: {line}"),
         };
         operations.push(op);
     }
