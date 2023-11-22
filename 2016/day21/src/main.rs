@@ -131,7 +131,7 @@ fn parse_operations() -> Vec<Operation> {
 fn main() {
     let operations = parse_operations();
 
-    let mut pwd: VecDeque<_> = "abcde".chars().collect();
+    let mut pwd: VecDeque<_> = "abcdefgh".chars().collect();
     for op in operations {
         println!("{op:?}");
         pwd = op.make_step(pwd);
