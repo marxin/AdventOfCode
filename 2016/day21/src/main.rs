@@ -1,4 +1,5 @@
-use std::{collections::VecDeque, fs, ops::Index};
+use itertools::Itertools;
+use std::{collections::VecDeque, fs};
 
 #[derive(Debug)]
 enum Operation {
@@ -128,13 +129,23 @@ fn parse_operations() -> Vec<Operation> {
     operations
 }
 
+fn make_steps(operations: &Vec<Operation>, pwd: &VecDeque<char>) -> VecDeque<char> {
+    let mut pwd = pwd.clone();
+    for op in operations {
+        pwd = op.make_step(pwd);
+    }
+    pwd
+}
+
 fn main() {
     let operations = parse_operations();
+    let expected: VecDeque<_> = "fbgdceah".chars().collect();
 
-    let mut pwd: VecDeque<_> = "abcdefgh".chars().collect();
-    for op in operations {
-        println!("{op:?}");
-        pwd = op.make_step(pwd);
-        println!("{}", String::from_iter(pwd.iter()));
+    for perm in expected.iter().permutations(expected.len()) {
+        let input: VecDeque<_> = perm.into_iter().cloned().collect();
+        let output = make_steps(&operations, &input);
+        if output == expected {
+            println!("{}", String::from_iter(input));
+        }
     }
 }
