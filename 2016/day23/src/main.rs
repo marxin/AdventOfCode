@@ -26,9 +26,6 @@ impl Cpu {
     fn run(& mut self) {
         while self.pc >= 0 && self.pc < self.instructions.len() as i32 {
             let insn = &self.instructions[self.pc as usize];
-            if self.pc == 9 || self.pc > 15 {
-                println!("pc: {}, insn: {insn:?} {:?}", self.pc, self.registers);
-            }
             // println!("pc: {}, insn: {insn:?} {:?}", self.pc, self.registers);
             match insn[0].as_str() {
                 "cpy" => {
