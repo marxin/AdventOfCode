@@ -88,6 +88,7 @@ fn main() {
         let p = permutation.clone();
         let mut steps = 0;
         let mut robot = 0;
+        permutation.push(0);
 
         while !permutation.is_empty() {
             let end = permutation[0];
