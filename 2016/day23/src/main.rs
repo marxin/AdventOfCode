@@ -9,7 +9,7 @@ struct Cpu {
 
 impl Cpu {
     fn new() -> Cpu {
-        Cpu {pc: 0, registers: HashMap::from([(String::from("a"), 7), (String::from("b"), 0), (String::from("c"), 0), (String::from("d"), 0)]), instructions: vec![]}
+        Cpu {pc: 0, registers: HashMap::from([(String::from("a"), 12), (String::from("b"), 0), (String::from("c"), 0), (String::from("d"), 0)]), instructions: vec![]}
     }
 
     fn get_value(&self, item: &String) -> i32 {
@@ -26,13 +26,15 @@ impl Cpu {
     fn run(& mut self) {
         while self.pc >= 0 && self.pc < self.instructions.len() as i32 {
             let insn = &self.instructions[self.pc as usize];
-            /*
-            println!("pc: {}, insn: {insn:?} {:?}", self.pc, self.registers);
-            for insn in &self.instructions {
-                println!("{insn:?}");
+            if insn[0] == "dec" && insn[1] == "b" {
+                println!("pc: {}, insn: {insn:?} {:?}", self.pc, self.registers);
+                /*
+                for insn in &self.instructions {
+                    println!("{insn:?}");
+                }
+                */
+                println!();
             }
-            println!();
-            */
 
             match insn[0].as_str() {
                 "cpy" => {
@@ -67,7 +69,7 @@ impl Cpu {
                                 _ => panic!(),
                             };
                             self.instructions[insn_index][0] = replacement.to_string();
-                            println!("change instruction {insn_index} to {replacement}");
+                            println!("change instruction {insn_index} ({value}) to {replacement}");
                         }
                     }
                 }
