@@ -15,14 +15,13 @@ fn main() {
     let mut steps = 0;
 
     loop {
-        println!("pc={pc}");
+        // println!("pc={pc}");
         if pc < 0 || pc as usize >= jumps.len() {
             println!("exit {pc} steps={steps}");
             break;
-        }
-        else {
+        } else {
             let offset = jumps[pc as usize];
-            jumps[pc as usize] += 1;
+            jumps[pc as usize] += if offset >= 3 { -1 } else { 1 };
             pc += offset;
             steps += 1;
         }
