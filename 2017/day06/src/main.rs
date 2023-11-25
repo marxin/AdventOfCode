@@ -5,14 +5,30 @@ use std::{collections::HashMap, collections::HashSet, fs};
 const MOVES: [(i32, i32); 4] = [(0, 1), (1, 0), (0, -1), (-1, 0)];
 
 fn main() {
-    let line = fs::read_to_string("input.txt").unwrap().lines().next().unwrap().to_string();
-    let mut banks: Vec<_> = line.split_whitespace().map(|x| x.parse::<u32>().unwrap()).collect();
-    let mut seen:HashSet<Vec<u32>> = HashSet::new();
+    let line = fs::read_to_string("input.txt")
+        .unwrap()
+        .lines()
+        .next()
+        .unwrap()
+        .to_string();
+    let mut banks: Vec<_> = line
+        .split_whitespace()
+        .map(|x| x.parse::<u32>().unwrap())
+        .collect();
+    let mut seen: HashSet<Vec<u32>> = HashSet::new();
     let mut steps = 0;
+    let mut one_more_time = true;
 
     loop {
         if seen.contains(&banks) {
-            break;
+            if one_more_time {
+                one_more_time = false;
+                seen.clear();
+                seen.insert(banks.clone());
+                steps = 0;
+            } else {
+                break;
+            }
         } else {
             seen.insert(banks.clone());
         }
