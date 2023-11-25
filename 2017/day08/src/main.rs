@@ -11,6 +11,7 @@ fn main() {
 
     let mut registers = HashMap::new();
     let data = fs::read_to_string("input.txt").unwrap();
+    let mut maximum = i32::MIN;
 
     for line in data.lines() {
         let (dst, insn, by, _, lhs, op, rhs) = line.split_whitespace().collect_tuple().unwrap();
@@ -37,8 +38,12 @@ fn main() {
         if op {
             *registers.entry(dst).or_insert(0) += add;
         }
+
+        let m = *registers.values().max().unwrap();
+        maximum = maximum.max(m);
     }
 
     println!("{registers:?}");
-    println!("max={}", registers.values().max().unwrap());
+    println!("max register={}", registers.values().max().unwrap());
+    println!("max during={}", maximum);
 }
