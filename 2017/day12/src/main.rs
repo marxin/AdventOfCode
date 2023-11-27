@@ -16,22 +16,31 @@ fn main() {
         }
     }
 
-    println!("{edges:?}");
-
     let mut queue = VecDeque::new();
-    queue.push_back(0);
-    let mut seen: HashSet<i32> = HashSet::from_iter(vec![0]);
+    let mut seen: HashSet<i32> = HashSet::new();
 
-    while let Some(item) = queue.pop_back() {
-        seen.insert(item);
+    let mut group_id = 0;
+    while seen.len() != edges.len() {
+        for n in edges.keys() {
+            if !seen.contains(n) {
+                queue.push_back(n.clone());
+                break;
+            }
+        }
 
-        for child in &edges[&item] {
-            if !seen.contains(&child) {
-                queue.push_back(child.clone());
-                seen.insert(child.clone());
+        group_id += 1;
+        while let Some(item) = queue.pop_back() {
+            seen.insert(item);
+
+            for child in &edges[&item] {
+                if !seen.contains(&child) {
+                    queue.push_back(child.clone());
+                    seen.insert(child.clone());
+                }
             }
         }
     }
 
     println!("{}", seen.len());
+    println!("{}", group_id);
 }
