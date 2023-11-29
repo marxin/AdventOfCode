@@ -20,15 +20,16 @@ fn main() {
 
     let mut seen = HashSet::from([(pos.clone())]);
 
-
+    let mut steps = 0;
     loop {
+        steps += 1;
         let neigh = (pos.0 + direction.0, pos.1 + direction.1);
         // println!("{pos:?}");
         if let Some(c) = map.get(&pos) {
             seen.insert(pos);
             match c {
                 'A'..='Z' => {
-                    print!("{}", c);
+                    print!("{} (steps={})", c, steps);
                     pos = neigh;
                 },
                 '|' | '-' => {
@@ -36,6 +37,7 @@ fn main() {
                     if nextc != c && (!nextc.is_alphabetic() && nextc != &'+') {
                         // skip the hole
                         pos = (pos.0 + 2 * direction.0, pos.1 + 2 * direction.1);
+                        steps += 1;
                     } else {
                         pos = neigh;
                     }
@@ -55,9 +57,11 @@ fn main() {
                 }
             }
         } else {
+            steps -= 1;
             break;
         }
     }
     println!();
+    println!("steps={steps}");
 }
  
