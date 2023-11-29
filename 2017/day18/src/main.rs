@@ -7,7 +7,6 @@ struct Pc {
     id: i64,
     regs: HashMap<String, i64>,
     insns: Vec<Vec<String>>,
-    last_sound: Option<i64>,
     input: VecDeque<i64>,
     yielded: bool,
     sent_messages: usize,
@@ -20,7 +19,6 @@ impl Pc {
             id: p,
             regs: HashMap::from([("p".to_string(), p)]),
             pc: 0,
-            last_sound: None,
             input: VecDeque::new(),
             yielded: false,
             sent_messages: 0,
@@ -109,7 +107,7 @@ fn main() {
         let pc0 = iter.next().unwrap();
         let pc1 = iter.next().unwrap();
 
-        if (first) {
+        if first {
             pc0.run(pc1);
         } else {
             pc1.run(pc0);
