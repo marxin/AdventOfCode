@@ -1,20 +1,29 @@
 #[allow(unused)]
 use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs};
 
+#[derive(Debug)]
 struct Pc {
     pc: i64,
+    id: i64,
     regs: HashMap<String, i64>,
     insns: Vec<Vec<String>>,
     last_sound: Option<i64>,
+    input: VecDeque<i64>,
+    yielded: bool,
+    sent_messages: usize,
 }
 
 impl Pc {
-    fn new(insns: Vec<Vec<String>>) -> Self {
+    fn new(insns: Vec<Vec<String>>, p: i64) -> Self {
         Self {
             insns,
-            regs: HashMap::new(),
+            id: p,
+            regs: HashMap::from([("p".to_string(), p)]),
             pc: 0,
             last_sound: None,
+            input: VecDeque::new(),
+            yielded: false,
+            sent_messages: 0,
         }
     }
 
@@ -26,10 +35,16 @@ impl Pc {
         }
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, other: &mut Pc) {
+        self.yielded = false;
         while self.pc >= 0 && (self.pc as usize) < self.insns.len() {
-            // println!("{:?}", self.regs);
             let insn = &self.insns[self.pc as usize];
+            /*
+            println!(
+                "PC #{}: {:?} {insn:?} ({:?})",
+                self.id, self.regs, self.input
+            );
+            */
             let opcode = insn[0].as_ref();
             match opcode {
                 "set" | "add" | "mul" | "mod" => {
@@ -45,12 +60,20 @@ impl Pc {
                     }
                 }
                 "snd" => {
-                    self.last_sound = Some(Self::get_value(&mut self.regs, &insn[1]));
+                    let value = Self::get_value(&mut self.regs, &insn[1]);
+                    other.input.push_back(value);
+                    self.sent_messages += 1;
                 }
                 "rcv" => {
-                    if Self::get_value(&mut self.regs, &insn[1]) != 0 {
-                        println!("recover {}", self.last_sound.unwrap());
-                        break;
+                    if let Some(value) = self.input.pop_front() {
+                        let dst = &insn[1];
+                        self.regs.entry(dst.to_owned()).or_default();
+                        *self.regs.get_mut(dst).unwrap() = value;
+                    } else {
+                        // yield for now
+                        println!("yielding {}", self.id);
+                        self.yielded = true;
+                        return;
                     }
                 }
                 "jgz" => {
@@ -79,6 +102,27 @@ fn main() {
         );
     }
 
-    let mut pc0 = Pc::new(insns.clone());
-    pc0.run();
+    let mut pcs = vec![Pc::new(insns.clone(), 0), Pc::new(insns.clone(), 1)];
+    let mut first = true;
+    loop {
+        let mut iter = pcs.iter_mut();
+        let pc0 = iter.next().unwrap();
+        let pc1 = iter.next().unwrap();
+
+        if (first) {
+            pc0.run(pc1);
+        } else {
+            pc1.run(pc0);
+        }
+
+        if pc0.yielded && pc1.yielded && pc0.input.is_empty() && pc1.input.is_empty() {
+            println!("done");
+            break;
+        }
+
+        first = !first;
+    }
+
+    println!("{:?}", pcs[0]);
+    println!("{:?}", pcs[1]);
 }
