@@ -1,7 +1,7 @@
 #[allow(unused)]
 use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs, ops};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct Point(i64, i64, i64);
 
 impl ops::Add for Point {
@@ -59,16 +59,15 @@ fn main() {
         particles.push(Particle::new(i, line));
     }
 
-    for _ in 0..10_000_000 {
+    for _ in 0..100_000 {
+        let mut collisions = HashMap::new();
         for p in particles.iter_mut() {
             p.step();
+            collisions.entry(p.pos.clone()).and_modify(|e| *e += 1).or_insert(1);
         }
+
+        particles.retain(|x| collisions.get(&x.pos).unwrap() == &1);
     }
 
-    particles.sort_by(|a, b| a.pos.distance().cmp(&b.pos.distance()));
-    for p in particles.iter().rev() {
-        println!("{:?} with dist {}", p, p.pos.distance());
-    }
-
-    // println!("{particles:?}");
+    println!("{}", particles.len());
 }
