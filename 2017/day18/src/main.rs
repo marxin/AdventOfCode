@@ -18,7 +18,7 @@ impl Pc {
         }
     }
 
-    fn get_value(regs: & mut HashMap<String, i64>, value: &str) -> i64 {
+    fn get_value(regs: &mut HashMap<String, i64>, value: &str) -> i64 {
         if let Ok(v) = value.parse::<i64>() {
             v
         } else {
@@ -26,14 +26,14 @@ impl Pc {
         }
     }
 
-    fn run(& mut self) {
+    fn run(&mut self) {
         while self.pc >= 0 && (self.pc as usize) < self.insns.len() {
             // println!("{:?}", self.regs);
             let insn = &self.insns[self.pc as usize];
             let opcode = insn[0].as_ref();
             match opcode {
                 "set" | "add" | "mul" | "mod" => {
-                    let v = Self::get_value(& mut self.regs, &insn[2]);
+                    let v = Self::get_value(&mut self.regs, &insn[2]);
                     let dst = &insn[1];
                     self.regs.entry(dst.to_owned()).or_default();
                     match opcode {
@@ -41,42 +41,44 @@ impl Pc {
                         "add" => *self.regs.get_mut(dst).unwrap() += v,
                         "mul" => *self.regs.get_mut(dst).unwrap() *= v,
                         "mod" => *self.regs.get_mut(dst).unwrap() %= v,
-                        _ => panic!()
+                        _ => panic!(),
                     }
-                },
+                }
                 "snd" => {
-                    self.last_sound = Some(Self::get_value(& mut self.regs, &insn[1]));
-                },
+                    self.last_sound = Some(Self::get_value(&mut self.regs, &insn[1]));
+                }
                 "rcv" => {
-                    if Self::get_value(& mut self.regs, &insn[1]) != 0 {
+                    if Self::get_value(&mut self.regs, &insn[1]) != 0 {
                         println!("recover {}", self.last_sound.unwrap());
                         break;
                     }
-                },
+                }
                 "jgz" => {
-                    if Self::get_value(& mut self.regs,&insn[1]) > 0 {
-                        self.pc += Self::get_value(& mut self.regs,&insn[2]);
+                    if Self::get_value(&mut self.regs, &insn[1]) > 0 {
+                        self.pc += Self::get_value(&mut self.regs, &insn[2]);
                         // will be incremented after this match statement
                         self.pc -= 1;
                     }
                 }
                 _ => todo!("{insn:?}"),
             }
-            
+
             self.pc += 1;
         }
     }
 }
 
-
-
 fn main() {
     let mut insns = Vec::new();
 
     for line in fs::read_to_string("input.txt").unwrap().lines() {
-        insns.push(line.split_whitespace().map(|x| x.to_string()).collect::<Vec<String>>());
+        insns.push(
+            line.split_whitespace()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>(),
+        );
     }
 
     let mut pc0 = Pc::new(insns.clone());
-    pc0.run();   
+    pc0.run();
 }
