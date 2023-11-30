@@ -77,9 +77,9 @@ fn step(pos: Morph, mapping: &Vec<(Morph, Morph)>) -> Morph {
             let y0 = y * part_size;
 
             let mut part = HashMap::new();
-            for (k, v) in pos.iter() {                
-                if k.0 >= x0 && k.0 < (x0 + part_size) && k.1 >= y0 && k.1 < (y0 + part_size ){
-                    part.insert((k.0 - x0, k.1 - y0), *v);
+            for xx in x * part_size..(x + 1) * part_size {
+                for yy in y * part_size..(y + 1) * part_size {
+                    part.insert((xx - x0, yy - y0), *pos.get(&(xx, yy)).unwrap());
                 }
             }
 
@@ -153,7 +153,7 @@ fn main() {
 
     let mut start = parse(".#./..#/###");
     print(&start);
-    for i in 0..5 {
+    for i in 0..18 {
         println!("step #{i} with size = {}", get_size(&start));
         start = step( start, &mapping_full);
         // print(&start);
