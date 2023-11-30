@@ -47,7 +47,6 @@ fn main() {
                     states.remove(&carrier);
                     orientation = (orientation + 2) % MOVES.len();
                 }
-                _ => panic!(),
             }
         } else {
             // Clean state
