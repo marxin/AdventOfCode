@@ -1,10 +1,13 @@
 #[allow(unused)]
 use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs};
 
-fn find_best(bridges: Vec<(i32, i32)>, last: i32, total: i32, best: &mut i32) {
-    if total > *best {
-        *best = total;
+fn find_best(bridges: Vec<(i32, i32)>, last: i32, total: i32, length: i32, best: &mut i32) {
+    if length == 31 {
+        if total > *best {
+            *best = total;
+        }
     }
+    
 
     for (i, b) in bridges.iter().enumerate() {
         if b.0 == last || b.1 == last {
@@ -16,7 +19,7 @@ fn find_best(bridges: Vec<(i32, i32)>, last: i32, total: i32, best: &mut i32) {
             }
             let mut bridges = bridges.clone();
             bridges.remove(i);
-            find_best(bridges, next, total + b.0 + b.1, best);
+            find_best(bridges, next, total + b.0 + b.1, length + 1, best);
         }
     }
 }
@@ -31,6 +34,6 @@ fn main() {
 
     println!("{bridges:?}");
     let mut best = 0;
-    find_best(bridges, 0, 0, & mut best);
+    find_best(bridges, 0, 0, 0, & mut best);
     println!("BEST: {best}");
 }
