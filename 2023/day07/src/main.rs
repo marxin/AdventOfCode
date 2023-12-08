@@ -7,7 +7,9 @@ use itertools::Itertools;
 #[allow(dead_code)]
 const MOVES: [(i32, i32); 4] = [(0, 1), (1, 0), (0, -1), (-1, 0)];
 
-const VALUES: [char; 13] = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+const VALUES: [char; 13] = [
+    'A', 'K', 'Q', 'T', '9', '8', '7', '6', '5', '4', '3', '2', 'J',
+];
 
 #[derive(Debug, Eq, PartialEq)]
 struct Hand {
@@ -22,10 +24,36 @@ impl Hand {
     }
 
     fn counts(&self) -> Vec<usize> {
-        let mut freqs = self.cards.chars().sorted().group_by(|x| *x).into_iter().map(|(_, v)| v.count()).filter(|x| *x > 1).collect_vec();
+        let jokers = self.cards.chars().filter(|&x| x == 'J').count();
+        let mut freqs = self
+            .cards
+            .chars()
+            .filter(|&c| c != 'J')
+            .sorted()
+            .group_by(|x| *x)
+            .into_iter()
+            .map(|(_, v)| v.count())
+            .filter(|x| *x > 1)
+            .collect_vec();
         freqs.sort();
         freqs.reverse();
-        freqs        
+
+        if !freqs.is_empty() {
+            freqs[0] += jokers;
+        } else {
+            match jokers {
+                0 => {}
+                1..=4 => {
+                    return vec![jokers + 1];
+                }
+                5 => {
+                    return vec![jokers];
+                }
+                _ => panic!(),
+            }
+        }
+
+        freqs
     }
 }
 
@@ -63,8 +91,11 @@ fn main() {
     for line in content.lines() {
         let parts = line.split_whitespace().collect_vec();
         let hand = Hand::new(parts[0].to_owned(), parts[1].parse().unwrap());
-        hand.counts();
         hands.push(hand);
+    }
+
+    for h in &hands {
+        println!("{h:?} {:?}", h.counts());
     }
 
     hands.sort();
