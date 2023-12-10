@@ -11,7 +11,10 @@ fn main() {
     let mut total = 0;
     let content = fs::read_to_string("input.txt").unwrap();
     for line in content.lines() {
-        let numbers = line.split_whitespace().map(|x| x.parse::<i64>().unwrap()).collect_vec();
+        let numbers = line
+            .split_whitespace()
+            .map(|x| x.parse::<i64>().unwrap())
+            .collect_vec();
 
         let mut lines = vec![numbers];
         loop {
@@ -20,11 +23,20 @@ fn main() {
                 break;
             }
 
-            lines.push(last.iter().tuple_windows().map(|(x, y)| y - x).collect_vec());
+            lines.push(
+                last.iter()
+                    .tuple_windows()
+                    .map(|(x, y)| y - x)
+                    .collect_vec(),
+            );
         }
 
-        let next = lines.iter().map(|value| value.last().unwrap()).sum::<i64>();
-        total += next;
+        let mut z = 0;
+        for v in lines.iter().rev().map(|value| value.first().unwrap()) {
+            z = v - z;
+        }
+
+        total += z;
 
         //println!("{lines:?}");
         //println!();
