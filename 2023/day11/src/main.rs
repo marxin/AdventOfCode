@@ -4,66 +4,38 @@ use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs}
 #[allow(unused)]
 use itertools::Itertools;
 
-#[allow(dead_code)]
-const MOVES: [(i32, i32); 4] = [(0, 1), (1, 0), (0, -1), (-1, 0)];
+const TIMES: usize = 1000000 - 1;
 
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
-    let mut lines = Vec::new();
-
-    for line in content.lines() {
-        lines.push(line.to_string());
-    }
-
-    let mut lines2 = lines
-        .into_iter()
-        .flat_map(|l| {
-            if l.contains('#') {
-                vec![l]
-            } else {
-                vec![l.to_owned(), l.to_owned()]
-            }
-        })
-        .collect_vec();
-
-    let mut y = lines2.first().unwrap().len() as i32 - 1;
-    while y >= 0 {
-        if lines2
-            .iter()
-            .all(|l| l.chars().nth(y as usize).unwrap() == '.')
-        {
-            for l in lines2.iter_mut() {
-                l.insert(y as usize, '.');
-            }
-        }
-
-        y -= 1;
-    }
+    let width = content.lines().next().unwrap().len();
+    let height = content.lines().count();
 
     let mut positions = Vec::new();
 
-    for (y, line) in lines2.iter().enumerate() {
+    for (y, line) in content.lines().enumerate() {
         for (x, c) in line.chars().enumerate() {
             if c == '#' {
-                positions.push((x as i32, y as i32));
+                positions.push((x, y));
             }
         }
     }
+
+    let empty_rows = (0..height).filter(|y| !positions.iter().any(|g| g.1 == *y)).collect_vec();
+    let empty_columns = (0..width).filter(|x| !positions.iter().any(|g| g.0 == *x)).collect_vec();
+    println!("empty_rows={empty_rows:?}, empty_columns={empty_columns:?}");
+
+    positions = positions.into_iter().map(|g| {
+        let xholes = empty_columns.iter().filter(|&&c| c < g.0).count();
+        let yholes = empty_rows.iter().filter(|&&r| r < g.1).count();
+        (g.0 + xholes * TIMES, g.1 + yholes * TIMES)
+    }).collect();
 
     let total = positions
         .iter()
         .cartesian_product(&positions)
-        .filter_map(|(a, b)| {
-            if a == b {
-                None
-            } else {
-                Some((a.0 - b.0).abs() + (a.1 - b.1).abs())
-            }
-        })
-        .sum::<i32>();
-
-    // println!("{}", lines2.join("\n"));
-    // println!("{positions:?}");
+        .map(|(a, b)| (a.0 as i64 - b.0 as i64).abs() + (a.1 as i64 - b.1 as i64).abs())
+        .sum::<i64>();
 
     println!("{}", total / 2);
 }
