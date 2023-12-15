@@ -4,13 +4,13 @@ use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs}
 #[allow(unused)]
 use itertools::Itertools;
 
-const DEPTH: usize = 5355;
+const DEPTH: i64 = 5355;
 
-fn calc(value: usize) -> usize {
+fn calc(value: i64) -> i64 {
     (value + DEPTH) % 20183
 }
 
-fn get(pos: (usize, usize), values: & mut HashMap<(usize, usize), usize>) -> usize {
+fn get(pos: (i64, i64), values: &mut HashMap<(i64, i64), i64>) -> i64 {
     if let Some(v) = values.get(&pos) {
         *v
     } else {
@@ -30,14 +30,14 @@ fn get(pos: (usize, usize), values: & mut HashMap<(usize, usize), usize>) -> usi
 fn main() {
     let target = (14, 796);
 
-    let mut values: HashMap<(usize, usize), usize> = HashMap::new();
+    let mut values: HashMap<(i64, i64), i64> = HashMap::new();
 
-    get(target, & mut values);
-    values.insert((0, 0),calc(0));
+    get(target, &mut values);
+    values.insert((0, 0), calc(0));
     values.insert(target, calc(0));
 
-    assert_eq!(values.len(), (target.0 + 1) * (target.1 + 1));
-    let total: usize = values.values().map(|v| v % 3).sum();
+    assert_eq!(values.len() as i64, (target.0 + 1) * (target.1 + 1));
+    let total = values.values().map(|v| v % 3).sum::<i64>();
 
     println!("{:?}", total);
 }
