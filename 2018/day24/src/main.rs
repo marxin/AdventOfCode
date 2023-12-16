@@ -119,49 +119,69 @@ fn main() {
     let max_init = players.iter().map(|p| p.len()).sum::<usize>() as i64;
     println!("{max_init}");
 
-    let mut immune = players[0].clone();
-    let mut infection = players[1].clone();
-
-    let mut round = 1;
-    loop {
-        println!("=== round #{round} ===");
-        let immune_mapping = select_targets(&immune, &infection);
-        let infection_mapping = select_targets(&infection, &immune);
-        println!("{immune_mapping:?} {infection_mapping:?}");
-
-        for i in (1..=max_init).rev() {
-            if let Some(attacker) = immune.iter().position(|x| x.initiative == i) {
-                if (immune_mapping.contains_key(&attacker)) {
-                    let target =  infection.get_mut(immune_mapping[&attacker]).unwrap();
-                    let attack = &immune[attacker];
-                    let killed = attack.combat_damage(&target) / target.hp;
-                    target.count -= killed;
-                    println!("Immune #{} killed {killed} unit of #{}", attack.initiative, target.initiative);
-                }
-            }
-            if let Some(attacker) = infection.iter().position(|x| x.initiative == i) {
-                if infection_mapping.contains_key(&attacker) {
-                    let target =  immune.get_mut(infection_mapping[&attacker]).unwrap();
-                    let attack = &infection[attacker];
-                    let killed = attack.combat_damage(&target) / target.hp;
-                    target.count -= killed;
-                    println!("Infection #{} killed {killed} unit of #{}", attack.initiative, target.initiative);
-                }
-            }
+    for boost in 0..=1570 {
+        println!("Boost = {boost}");
+        let mut immune = players[0].clone();
+        for im in immune.iter_mut() {
+            im.damage += boost;
         }
 
-        immune.retain(|x| x.count > 0);
-        infection.retain(|x| x.count > 0);
+        let mut infection = players[1].clone();
 
-        if immune.is_empty() || infection.is_empty() {
+        let mut round = 1;
+        loop {
+            // println!("=== round #{round} ===");
+            let immune_mapping = select_targets(&immune, &infection);
+            let infection_mapping = select_targets(&infection, &immune);
+            // println!("{immune_mapping:?} {infection_mapping:?}");
+
+            for i in (1..=max_init).rev() {
+                if let Some(attacker) = immune.iter().position(|x| x.initiative == i) {
+                    if (immune_mapping.contains_key(&attacker)) {
+                        let target =  infection.get_mut(immune_mapping[&attacker]).unwrap();
+                        let attack = &immune[attacker];
+                        if attack.count > 0 {
+                            let killed = attack.combat_damage(&target) / target.hp;
+                            target.count -= killed;
+                            // println!("Immune #{} killed {killed} unit of #{}", attack.initiative, target.initiative);
+                        }
+                    }
+                }
+                if let Some(attacker) = infection.iter().position(|x| x.initiative == i) {
+                    if infection_mapping.contains_key(&attacker) {
+                        let target =  immune.get_mut(infection_mapping[&attacker]).unwrap();
+                        let attack = &infection[attacker];
+                        if attack.count > 0 {
+                            let killed = attack.combat_damage(&target) / target.hp;
+                            target.count -= killed;
+                            // println!("Infection #{} killed {killed} unit of #{}", attack.initiative, target.initiative);
+                        }
+                    }
+                }
+            }
+
+            immune.retain(|x| x.count > 0);
+            infection.retain(|x| x.count > 0);
+
+            if immune.is_empty() || infection.is_empty() {
+                break;
+            }
+
+            // tie
+            if round == 10000 {
+                break;
+            }
+
+            round += 1;
+        }
+
+        let immune_remaining = immune.iter().map(|x| x.count).sum::<i64>();
+        let infection_remaining = infection.iter().map(|x| x.count).sum::<i64>();
+
+        println!("{immune_remaining} {infection_remaining}");
+
+        if immune_remaining > 0 && infection_remaining == 0 {
             break;
         }
-
-        round += 1;
     }
-
-    println!("IMMUNE = {immune:?}");
-    println!("INFECTION = {infection:?}");
-
-    println!("{} {}", immune.iter().map(|x| x.count).sum::<i64>(), infection.iter().map(|x| x.count).sum::<i64>());
 }
