@@ -4,8 +4,11 @@ use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs}
 #[allow(unused)]
 use itertools::Itertools;
 
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
+struct Point(i32, i32);
+
 #[allow(dead_code)]
-const MOVES: [(i32, i32); 4] = [(0, 1), (1, 0), (0, -1), (-1, 0)];
+const MOVES: [Point; 4] = [Point(0, 1), Point(1, 0), Point(0, -1), Point(-1, 0)];
 
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
