@@ -66,8 +66,8 @@ fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let lines = content.lines().collect_vec();
 
-    let _width = lines.first().unwrap().len() as i32;
-    let _height = lines.len() as i32;
+    let width = lines.first().unwrap().len() as i32;
+    let height = lines.len() as i32;
     let mut map = HashMap::new();
 
     for (y, line) in lines.iter().enumerate() {
@@ -76,6 +76,20 @@ fn main() {
         }
     }
 
-    let total = compute_energy(&map, Point(0, 0), Point(1, 0));
-    println!("{total}");
+    let mut maximum = 0;
+    for y in 0..height {
+        let total = compute_energy(&map, Point(0, y), Point(1, 0));
+        maximum = maximum.max(total);
+        let total = compute_energy(&map, Point(width - 1, y), Point(-1, 0));
+        maximum = maximum.max(total);
+    }
+
+    for x in 0..width {
+        let total = compute_energy(&map, Point(x, 0), Point(0, 1));
+        maximum = maximum.max(total);
+        let total = compute_energy(&map, Point(x, height - 1), Point(0, -1));
+        maximum = maximum.max(total);
+    }
+
+    println!("{maximum}");
 }
