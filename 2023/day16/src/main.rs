@@ -12,41 +12,54 @@ const MOVES: [Point; 4] = [Point(0, 1), Point(1, 0), Point(0, -1), Point(-1, 0)]
 
 fn reflect(c: char, orient: &Point) -> Vec<Point> {
     match c {
-        '-' => {
-            match orient {
-                &Point(1, 0) | &Point(-1, 0) => vec![orient.clone()],
-                &Point(0, 1) | &Point(0, -1) => vec![Point(1, 0), Point(-1, 0)],
-                _ => panic!(),
-            }
+        '-' => match orient {
+            &Point(1, 0) | &Point(-1, 0) => vec![orient.clone()],
+            &Point(0, 1) | &Point(0, -1) => vec![Point(1, 0), Point(-1, 0)],
+            _ => panic!(),
         },
-        '|' => {
-            match orient {
-                &Point(1, 0) | &Point(-1, 0) => vec![Point(0, 1), Point(0, -1)],
-                &Point(0, 1) | &Point(0, -1) => vec![orient.clone()],
-                _ => panic!(),
-            }
+        '|' => match orient {
+            &Point(1, 0) | &Point(-1, 0) => vec![Point(0, 1), Point(0, -1)],
+            &Point(0, 1) | &Point(0, -1) => vec![orient.clone()],
+            _ => panic!(),
         },
-        '/' => {
-            match orient {
-                Point(1, 0) => vec![Point(0, -1)],
-                Point(-1, 0) => vec![Point(0, 1)],
-                Point(0, 1) => vec![Point(-1, 0)],
-                Point(0, -1) => vec![Point(1, 0)],
-                _ => panic!(),
-            }
+        '/' => match orient {
+            Point(1, 0) => vec![Point(0, -1)],
+            Point(-1, 0) => vec![Point(0, 1)],
+            Point(0, 1) => vec![Point(-1, 0)],
+            Point(0, -1) => vec![Point(1, 0)],
+            _ => panic!(),
         },
-        '\\' => {
-            match orient {
-                Point(1, 0) => vec![Point(0, 1)],
-                Point(-1, 0) => vec![Point(0, -1)],
-                Point(0, 1) => vec![Point(1, 0)],
-                Point(0, -1) => vec![Point(-1, 0)],
-                _ => panic!(),
+        '\\' => match orient {
+            Point(1, 0) => vec![Point(0, 1)],
+            Point(-1, 0) => vec![Point(0, -1)],
+            Point(0, 1) => vec![Point(1, 0)],
+            Point(0, -1) => vec![Point(-1, 0)],
+            _ => panic!(),
+        },
+        '.' => vec![orient.clone()],
+        _ => panic!(),
+    }
+}
+
+fn compute_energy(map: &HashMap<Point, char>, start: Point, orient: Point) -> usize {
+    let mut visited: HashSet<(Point, Point)> = HashSet::new();
+    let mut queue = VecDeque::from([(start, orient)]);
+
+    while let Some(state) = queue.pop_back() {
+        if !visited.contains(&state) {
+            visited.insert(state.clone());
+
+            let (pos, orient) = state;
+            for next_orient in reflect(map[&pos], &orient) {
+                let next_pos = Point(pos.0 + next_orient.0, pos.1 + next_orient.1);
+                if map.contains_key(&next_pos) && !visited.contains(&(next_pos, next_orient)) {
+                    queue.push_back((next_pos, next_orient));
+                }
             }
         }
-        '.' => vec![orient.clone()],
-        _ => panic!()
     }
+
+    visited.iter().map(|(p, _)| p.clone()).unique().count()
 }
 
 fn main() {
@@ -63,23 +76,6 @@ fn main() {
         }
     }
 
-    let mut visited: HashSet<(Point, Point)> = HashSet::new();
-    let mut queue = VecDeque::from([(Point(0, 0), Point(1, 0))]);
-
-    while let Some(state) = queue.pop_back() {
-        if !visited.contains(&state) {
-            visited.insert(state.clone());
-
-            let (pos, orient) = state;
-            for next_orient in reflect(map[&pos], &orient) {
-                let next_pos = Point(pos.0 + next_orient.0, pos.1 + next_orient.1);
-                if map.contains_key(&next_pos) && !visited.contains(&(next_pos, next_orient)) {
-                    queue.push_back((next_pos, next_orient));
-                }
-            }
-        }
-    }
-
-    let total = visited.iter().map(|(p, _)| p.clone()).unique().count();
+    let total = compute_energy(&map, Point(0, 0), Point(1, 0));
     println!("{total}");
 }
