@@ -17,6 +17,9 @@ struct State {
 #[allow(dead_code)]
 const MOVES: [Point; 4] = [Point(0, 1), Point(1, 0), Point(0, -1), Point(-1, 0)];
 
+const MIN_STEPS: i32 = 0;
+const MAX_STEPS: i32 = 3;
+
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let lines = content.lines().collect_vec();
@@ -60,12 +63,12 @@ fn main() {
 
     while let Some((steps, state)) = queue.pop_back() {
         //  println!("{state:?}");
-        assert!(state.straight <= 3);
+        assert!(state.straight <= MAX_STEPS);
         if steps > best {
             continue;
         }
 
-        if state.pos == end {
+        if state.pos == end && state.straight >= MIN_STEPS {
             if steps < best {
                 best = steps;
                 println!("New best solution: {best}, worklist size: {}", queue.len());
@@ -82,13 +85,13 @@ fn main() {
         states.insert(state.clone(), steps);
 
         let index = MOVES.iter().position(|&x| x == state.orient).unwrap();
-        let mut orients = vec![
-            MOVES[(index + 1) % MOVES.len()],
-            MOVES[(index - 1) % MOVES.len()],
-        ];
-
-        if state.straight < 3 {
+        let mut orients = Vec::new();
+        if state.straight < MAX_STEPS {
             orients.push(state.orient.clone());
+        }
+        if state.straight >= MIN_STEPS {
+            orients.push(MOVES[(index + 1) % MOVES.len()]);
+            orients.push(MOVES[(index - 1) % MOVES.len()]);
         }
 
         for orient in orients {
