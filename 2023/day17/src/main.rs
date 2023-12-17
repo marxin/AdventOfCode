@@ -27,7 +27,10 @@ fn main() {
 
     for (y, line) in lines.iter().enumerate() {
         for (x, c) in line.chars().enumerate() {
-            map.insert(Point(x as i32, y as i32), c.to_string().parse::<i32>().unwrap());
+            map.insert(
+                Point(x as i32, y as i32),
+                c.to_string().parse::<i32>().unwrap(),
+            );
         }
     }
 
@@ -35,8 +38,22 @@ fn main() {
 
     let mut states: HashMap<State, i32> = HashMap::new();
     let mut queue = VecDeque::from(vec![
-        (0, State { pos: Point(0, 0), orient: Point(1, 0), straight: 0 }),
-        (0, State { pos: Point(0, 0), orient: Point(0, 1), straight: 0 }),
+        (
+            0,
+            State {
+                pos: Point(0, 0),
+                orient: Point(1, 0),
+                straight: 0,
+            },
+        ),
+        (
+            0,
+            State {
+                pos: Point(0, 0),
+                orient: Point(0, 1),
+                straight: 0,
+            },
+        ),
     ]);
 
     let mut best = i32::MAX;
@@ -53,7 +70,6 @@ fn main() {
                 best = steps;
                 println!("New best solution: {best}, worklist size: {}", queue.len());
             }
-            
         }
 
         if let Some(value) = states.get(&state) {
@@ -64,9 +80,12 @@ fn main() {
         }
 
         states.insert(state.clone(), steps);
-        
+
         let index = MOVES.iter().position(|&x| x == state.orient).unwrap();
-        let mut orients = vec![MOVES[(index + 1) % MOVES.len()], MOVES[(index - 1) % MOVES.len()]];
+        let mut orients = vec![
+            MOVES[(index + 1) % MOVES.len()],
+            MOVES[(index - 1) % MOVES.len()],
+        ];
 
         if state.straight < 3 {
             orients.push(state.orient.clone());
@@ -79,11 +98,14 @@ fn main() {
                 1
             };
 
-            let next = State { orient: orient, pos: Point(state.pos.0 + orient.0, state.pos.1 + orient.1), straight: straight };
+            let next = State {
+                orient: orient,
+                pos: Point(state.pos.0 + orient.0, state.pos.1 + orient.1),
+                straight: straight,
+            };
             if map.contains_key(&next.pos) {
                 queue.push_back((steps + map[&next.pos], next));
             }
         }
     }
-    
 }
