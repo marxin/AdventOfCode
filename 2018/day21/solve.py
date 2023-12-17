@@ -72,3 +72,30 @@ for i in range(best, -1, -1):
         best = i
         best_steps = r
         print(best, best_steps)
+        break
+
+C = 6152285
+D = 65536
+
+seen = set()
+cs = set()
+
+while True:
+    E = D % 256
+    C += E
+    C = (C%(2**24) * 65899) % (2**24)
+    if D < 256:
+        if C not in cs:
+            if not cs:
+                print(f'First: {C}')
+            print(C)
+            lastc = C
+        cs.add(C)
+        D = C | (2**16)
+        if D in seen:
+            print(f'Last C: {lastc}')
+            sys.exit(0)
+        seen.add(D)
+        C = 6152285
+        continue
+    D = D // 256
