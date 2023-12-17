@@ -1,5 +1,8 @@
+use std::cmp::Reverse;
 #[allow(unused)]
-use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs};
+use std::{
+    collections::BinaryHeap, collections::HashMap, collections::HashSet, collections::VecDeque, fs,
+};
 
 #[allow(unused)]
 use itertools::Itertools;
@@ -7,7 +10,7 @@ use itertools::Itertools;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
 struct Point(i32, i32);
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
 struct State {
     pos: Point,
     orient: Point,
@@ -17,8 +20,8 @@ struct State {
 #[allow(dead_code)]
 const MOVES: [Point; 4] = [Point(0, 1), Point(1, 0), Point(0, -1), Point(-1, 0)];
 
-const MIN_STEPS: i32 = 0;
-const MAX_STEPS: i32 = 3;
+const MIN_STEPS: i32 = 4;
+const MAX_STEPS: i32 = 10;
 
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
@@ -37,31 +40,34 @@ fn main() {
         }
     }
 
+    let start = Point(0, 0);
     let end = Point(width - 1, height - 1);
+    let dist = |pos: &Point| end.0 - pos.0 + end.1 - pos.1;
 
     let mut states: HashMap<State, i32> = HashMap::new();
-    let mut queue = VecDeque::from(vec![
-        (
-            0,
-            State {
-                pos: Point(0, 0),
-                orient: Point(1, 0),
-                straight: 0,
-            },
-        ),
-        (
-            0,
-            State {
-                pos: Point(0, 0),
-                orient: Point(0, 1),
-                straight: 0,
-            },
-        ),
-    ]);
+    let mut heap = BinaryHeap::new();
+    heap.push(Reverse((
+        dist(&start) + 0,
+        0,
+        State {
+            pos: start.clone(),
+            orient: Point(1, 0),
+            straight: 0,
+        },
+    )));
+    heap.push(Reverse((
+        dist(&start) + 0,
+        0,
+        State {
+            pos: start.clone(),
+            orient: Point(0, 1),
+            straight: 0,
+        },
+    )));
 
     let mut best = i32::MAX;
 
-    while let Some((steps, state)) = queue.pop_back() {
+    while let Some(Reverse((_, steps, state))) = heap.pop() {
         //  println!("{state:?}");
         assert!(state.straight <= MAX_STEPS);
         if steps > best {
@@ -71,7 +77,7 @@ fn main() {
         if state.pos == end && state.straight >= MIN_STEPS {
             if steps < best {
                 best = steps;
-                println!("New best solution: {best}, worklist size: {}", queue.len());
+                println!("New best solution: {best}, worklist size: {}", heap.len());
             }
         }
 
@@ -107,7 +113,8 @@ fn main() {
                 straight: straight,
             };
             if map.contains_key(&next.pos) {
-                queue.push_back((steps + map[&next.pos], next));
+                let next_steps = steps + map[&next.pos];
+                heap.push(Reverse((dist(&next.pos) + next_steps, next_steps, next)));
             }
         }
     }
