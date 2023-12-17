@@ -46,28 +46,28 @@ fn main() {
 
     let mut states: HashMap<State, i32> = HashMap::new();
     let mut heap = BinaryHeap::new();
-    heap.push(Reverse((
-        dist(&start) + 0,
+    heap.push((
+        Reverse(dist(&start) + 0),
         0,
         State {
             pos: start.clone(),
             orient: Point(1, 0),
             straight: 0,
         },
-    )));
-    heap.push(Reverse((
-        dist(&start) + 0,
+    ));
+    heap.push((
+        Reverse(dist(&start) + 0),
         0,
         State {
             pos: start.clone(),
             orient: Point(0, 1),
             straight: 0,
         },
-    )));
+    ));
 
     let mut best = i32::MAX;
 
-    while let Some(Reverse((_, steps, state))) = heap.pop() {
+    while let Some((_, steps, state)) = heap.pop() {
         //  println!("{state:?}");
         assert!(state.straight <= MAX_STEPS);
         if steps > best {
@@ -77,7 +77,7 @@ fn main() {
         if state.pos == end && state.straight >= MIN_STEPS {
             if steps < best {
                 best = steps;
-                println!("New best solution: {best}, worklist size: {}", heap.len());
+                println!("New best solution: {best}, work list size: {}", heap.len());
             }
         }
 
@@ -114,7 +114,7 @@ fn main() {
             };
             if map.contains_key(&next.pos) {
                 let next_steps = steps + map[&next.pos];
-                heap.push(Reverse((dist(&next.pos) + next_steps, next_steps, next)));
+                heap.push((Reverse(dist(&next.pos) + next_steps), next_steps, next));
             }
         }
     }
