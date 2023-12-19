@@ -37,48 +37,114 @@ fn get_goto(label: &str) -> GoToTarget {
     }
 }
 
-struct Object(HashMap<char, i32>);
+#[derive(Debug, Clone)]
+struct Interval {
+    start: i32,
+    end: i32,
+}
 
-impl Object {
-    fn is_accepted(&self, start: &str, workflows: &HashMap<String, Vec<Rule>>) -> bool {
-        let mut workflow_name = start.to_string();
+impl Interval {
+    fn split(&self, x: i32, ord: Ordering) -> (Option<Interval>, Option<Interval>) {
+        match ord {
+            Ordering::Less => {
+                if x <= self.start {
+                    (None, Some(self.clone()))
+                } else if x >= self.end {
+                    (Some(self.clone()), None)
+                } else {
+                    (
+                        Some(Interval {
+                            start: self.start,
+                            end: x,
+                        }),
+                        Some(Interval {
+                            start: x,
+                            end: self.end,
+                        }),
+                    )
+                }
+            }
+            Ordering::Greater => {
+                if x >= self.end - 1 {
+                    (None, Some(self.clone()))
+                } else if x <= self.start - 1 {
+                    (Some(self.clone()), None)
+                } else {
+                    (
+                        Some(Interval {
+                            start: x + 1,
+                            end: self.end,
+                        }),
+                        Some(Interval {
+                            start: self.start,
+                            end: x + 1,
+                        }),
+                    )
+                }
+            }
+            _ => panic!(),
+        }
+    }
 
-        loop {
-            let workflow = workflows.get(&workflow_name).unwrap();
-            for rule in workflow {
-                match rule {
-                    Rule::GoTo(target) => match target {
-                        GoToTarget::Accept => {
-                            return true;
-                        }
-                        GoToTarget::Reject => {
-                            return false;
-                        }
-                        GoToTarget::Workflow(name) => {
-                            workflow_name = name.to_owned();
-                            break;
-                        }
-                    },
-                    Rule::Condition {
-                        key,
-                        ordering,
-                        value,
-                        goto,
-                    } => {
-                        if self.0[key].cmp(value) == *ordering {
-                            match goto {
-                                GoToTarget::Accept => {
-                                    return true;
-                                }
-                                GoToTarget::Reject => {
-                                    return false;
-                                }
-                                GoToTarget::Workflow(name) => {
-                                    workflow_name = name.to_owned();
-                                    break;
-                                }
+    fn size(&self) -> u64 {
+        (self.end - self.start) as u64
+    }
+}
+
+#[derive(Debug)]
+struct Object {
+    vals: HashMap<char, Interval>,
+    times: u64,
+}
+
+fn process(mut object: Object, start: &str, workflows: &HashMap<String, Vec<Rule>>) -> u64 {
+    let mut workflow_name = start.to_string();
+    let mut total = 0;
+
+    loop {
+        let workflow = workflows.get(&workflow_name).unwrap();
+        for rule in workflow {
+            match rule {
+                Rule::GoTo(target) => match target {
+                    GoToTarget::Accept => {
+                        total += object.times;
+                        return total;
+                    }
+                    GoToTarget::Reject => return total,
+                    GoToTarget::Workflow(name) => {
+                        return total + process(object, name, workflows);
+                    }
+                },
+                Rule::Condition {
+                    key,
+                    ordering,
+                    value,
+                    goto,
+                } => {
+                    let interval = object.vals[key].clone();
+                    let (true_interval, false_interval) = interval.split(*value, *ordering);
+                    if let Some(true_interval) = true_interval {
+                        let subsize = object.times / interval.size() * true_interval.size();
+                        let mut subobject = Object {
+                            vals: object.vals.clone(),
+                            times: subsize,
+                        };
+                        *subobject.vals.get_mut(&key).unwrap() = true_interval;
+                        match goto {
+                            GoToTarget::Accept => total += subobject.times,
+                            GoToTarget::Reject => {}
+                            GoToTarget::Workflow(name) => {
+                                total += process(subobject, name, workflows);
                             }
                         }
+                    }
+
+                    if let Some(false_interval) = false_interval {
+                        let subsize = object.times / interval.size() * false_interval.size();
+                        *object.vals.get_mut(&key).unwrap() = false_interval;
+                        object.times = subsize;
+                    } else {
+                        return total;
                     }
                 }
             }
@@ -124,39 +190,19 @@ fn main() {
         workflows.insert(name, rules);
     }
 
-    let objects: Vec<HashMap<char, i32>> = content_parts[1]
-        .lines()
-        .map(|line| {
-            // {x=2127,m=1623,a=2188,s=1013}
-            line.strip_prefix('{')
-                .unwrap()
-                .strip_suffix('}')
-                .unwrap()
-                .split(',')
-                .map(|part| {
-                    let mut parts = part.split('=');
-                    let key = parts.next().unwrap().chars().next().unwrap();
-                    let value = parts.next().unwrap().parse::<i32>().unwrap();
-                    (key, value)
-                })
-                .collect()
-        })
-        .collect_vec();
+    let vals = HashMap::from(['x', 'm', 'a', 's'].map(|c| {
+        (
+            c,
+            Interval {
+                start: 1,
+                end: 4000 + 1,
+            },
+        )
+    }));
+    let object = Object {
+        vals,
+        times: 4000u64.pow(4),
+    };
 
-    for w in workflows.iter() {
-        println!("{w:?}");
-    }
-
-    // println!("{objects:?}");
-
-    let mut total = 0;
-
-    for obj in objects {
-        let obj = Object(obj);
-        if obj.is_accepted("in", &workflows) {
-            total += obj.0.values().sum::<i32>();
-        }
-    }
-
-    println!("{total}");
+    println!("{}", process(object, "in", &workflows));
 }
