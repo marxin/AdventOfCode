@@ -98,7 +98,8 @@ struct Object {
 }
 
 fn process(mut object: Object, start: &str, workflows: &HashMap<String, Vec<Rule>>) -> u64 {
-    let mut workflow_name = start.to_string();
+    println!("{object:?}");
+    let workflow_name = start.to_string();
     let mut total = 0;
 
     loop {
