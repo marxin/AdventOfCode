@@ -37,6 +37,55 @@ fn get_goto(label: &str) -> GoToTarget {
     }
 }
 
+struct Object(HashMap<char, i32>);
+
+impl Object {
+    fn is_accepted(&self, start: &str, workflows: &HashMap<String, Vec<Rule>>) -> bool {
+        let mut workflow_name = start.to_string();
+
+        loop {
+            let workflow = workflows.get(&workflow_name).unwrap();
+            for rule in workflow {
+                match rule {
+                    Rule::GoTo(target) => match target {
+                        GoToTarget::Accept => {
+                            return true;
+                        }
+                        GoToTarget::Reject => {
+                            return false;
+                        }
+                        GoToTarget::Workflow(name) => {
+                            workflow_name = name.to_owned();
+                            break;
+                        }
+                    },
+                    Rule::Condition {
+                        key,
+                        ordering,
+                        value,
+                        goto,
+                    } => {
+                        if self.0[key].cmp(value) == *ordering {
+                            match goto {
+                                GoToTarget::Accept => {
+                                    return true;
+                                }
+                                GoToTarget::Reject => {
+                                    return false;
+                                }
+                                GoToTarget::Workflow(name) => {
+                                    workflow_name = name.to_owned();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let content_parts = content.split("\n\n").collect_vec();
@@ -94,54 +143,18 @@ fn main() {
         })
         .collect_vec();
 
-    println!("{workflows:?}");
-    println!("{objects:?}");
+    for w in workflows.iter() {
+        println!("{w:?}");
+    }
+
+    // println!("{objects:?}");
 
     let mut total = 0;
 
     for obj in objects {
-        let mut workflow_name = "in".to_string();
-        'outer: loop {
-            let workflow = workflows.get(&workflow_name).unwrap();
-            for rule in workflow {
-                match rule {
-                    Rule::GoTo(target) => match target {
-                        GoToTarget::Accept => {
-                            total += obj.values().sum::<i32>();
-                            break 'outer;
-                        }
-                        GoToTarget::Reject => {
-                            break 'outer;
-                        }
-                        GoToTarget::Workflow(name) => {
-                            workflow_name = name.to_owned();
-                            break;
-                        }
-                    },
-                    Rule::Condition {
-                        key,
-                        ordering,
-                        value,
-                        goto,
-                    } => {
-                        if obj[key].cmp(value) == *ordering {
-                            match goto {
-                                GoToTarget::Accept => {
-                                    total += obj.values().sum::<i32>();
-                                    break 'outer;
-                                }
-                                GoToTarget::Reject => {
-                                    break 'outer;
-                                }
-                                GoToTarget::Workflow(name) => {
-                                    workflow_name = name.to_owned();
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        let obj = Object(obj);
+        if obj.is_accepted("in", &workflows) {
+            total += obj.0.values().sum::<i32>();
         }
     }
 
