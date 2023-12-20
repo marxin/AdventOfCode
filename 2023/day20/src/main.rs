@@ -131,26 +131,6 @@ fn main() {
                 }
             }
         }
-
-        /*
-        for m in modules.iter() {
-            if m.0 != "gp" {
-                continue;
-            }
-            print!("{}: ", m.0);
-            match &m.1.module {
-                Module::Broadcaster => {
-                    println!("broadcaster");
-                },
-                Module::Conjunction { memory } => {
-                    println!("{:?}", memory.values());
-                },
-                Module::FlipFlop { enabled } => {
-                    println!("{enabled}");
-                }
-            }
-        }
-        */
     }
 
     println!("{times:?}");
