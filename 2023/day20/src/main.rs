@@ -71,8 +71,10 @@ fn main() {
 
     let mut times = HashMap::new();
 
-    for i in 0..1000 {
-        println!("=== #{i} ===");
+    let mut cache = HashMap::new();
+
+    for i in 0.. {
+        // println!("=== #{i} ===");
         queue.push_back(Signal {
             source: "button".to_string(),
             destination: "broadcaster".to_string(),
@@ -85,6 +87,14 @@ fn main() {
             high,
         }) = queue.pop_front()
         {
+            if destination == "xn" && high {
+                if !cache.contains_key(&source) {
+                    cache.insert(source.clone(), i);
+                }
+                println!("#{i} {source} -> {destination} = {high} (diff: {})", i - cache[&source]);
+                *cache.get_mut(&source).unwrap() = i;
+            }
+
             times.entry(high).and_modify(|x| *x += 1).or_insert(1);
             // println!("{source} -> {destination} = {high}");
 
@@ -115,8 +125,32 @@ fn main() {
                         });
                     }
                 }
+            } else {
+                if destination == "rx" && !high {
+                    todo!("done {high}");
+                }
             }
         }
+
+        /*
+        for m in modules.iter() {
+            if m.0 != "gp" {
+                continue;
+            }
+            print!("{}: ", m.0);
+            match &m.1.module {
+                Module::Broadcaster => {
+                    println!("broadcaster");
+                },
+                Module::Conjunction { memory } => {
+                    println!("{:?}", memory.values());
+                },
+                Module::FlipFlop { enabled } => {
+                    println!("{enabled}");
+                }
+            }
+        }
+        */
     }
 
     println!("{times:?}");
