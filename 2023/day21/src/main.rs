@@ -90,7 +90,7 @@ fn main() {
     let mut superrock = HashSet::new();
 
     // copy map
-    let K = 10;
+    let K = 8;
     for x in -K..K {
         for y in -K..K {
             for p in map.iter() {
@@ -113,18 +113,46 @@ fn main() {
 
     let mut last = 0;
 
-    let mut D = 1u32;
-    for i in 1..1000 {
+    let guess = |D| {
+        5764u64
+            + 5755
+            + 5756
+            + 5747
+            + 2 * D * 964
+            + D * 965
+            + D * 984
+            + (D * D) * 7650
+            + (D - 1) * (D - 1) * 7637
+            + (D - 1) * (6703 + 6690 + 6694 + 6698)
+    };
+    println!("Guess for 202300: {}", guess(202300));
+
+    let mut D = 0u64;
+
+    for i in 1..2000 {
         positions = step(&supermap, positions);
 
-        if i >= 65 && (i - 65) % 131 == 0 {
-            // print(&positions, &superrock, N, 1, &start.unwrap());
-            println!(
-                "#{} has {} points, per square: {}",
-                i,
-                positions.len(),
-                positions.len() as f32 / (D.pow(2) as f32)
-            );
+        if i >= 65 && (i - 65) % (2 * 131) == 0 {
+            println!("X={D} (total: {})", positions.len());
+
+            println!("guess = {}", guess(D));
+
+            for y in -K..K {
+                for x in -K..K {
+                    let mut pixels = 0;
+                    for p in positions.iter() {
+                        if x * N <= p.0 && p.0 < (x + 1) * N && y * N <= p.1 && p.1 < (y + 1) * N {
+                            pixels += 1;
+                        }
+                    }
+                    if pixels != 0 {
+                        print!("{pixels:05} ");
+                    } else {
+                        print!("      ");
+                    }
+                }
+                println!();
+            }
             D += 2;
         }
     }
