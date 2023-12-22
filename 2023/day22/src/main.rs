@@ -6,15 +6,13 @@ use itertools::Itertools;
 
 type Point = Vec<i32>;
 
-#[derive(Debug, PartialEq, Eq)]
-struct Brick(Point, Point);
+#[derive(Debug, PartialEq, Eq, Clone)]
+struct Brick(Point, Point, bool);
 
 fn new_point(part: &str) -> Vec<i32> {
-    let mut v = part
-        .split(',')
+    part.split(',')
         .map(|x| x.parse::<i32>().unwrap())
-        .collect_vec();
-    v
+        .collect_vec()
 }
 
 impl Brick {
@@ -56,14 +54,6 @@ impl Brick {
         self.0[2] -= 1;
         self.1[2] -= 1;
     }
-
-    fn vol(&self) -> usize {
-        self.1
-            .iter()
-            .zip(&self.0)
-            .map(|(&x, y)| x as usize - *y as usize + 1)
-            .product()
-    }
 }
 
 fn main() {
@@ -73,7 +63,7 @@ fn main() {
     let mut bricks = Vec::new();
     for (_y, line) in lines.iter().enumerate() {
         let parts = line.split('~').collect_vec();
-        bricks.push(Brick(new_point(parts[0]), new_point(parts[1])));
+        bricks.push(Brick(new_point(parts[0]), new_point(parts[1]), false));
     }
 
     let mut pixels = HashSet::new();
@@ -104,34 +94,51 @@ fn main() {
         }
     }
 
-    assert_eq!(bricks.iter().map(|x| x.vol()).sum::<usize>(), pixels.len());
-
-    let cloned_pixels = pixels.clone();
+    let mut totalus = 0;
 
     let mut counter = 0;
     for (i, candidate) in bricks.iter().enumerate() {
-        assert_eq!(cloned_pixels, pixels);
+        let mut cloned = pixels.clone();
         for p in candidate.get_pixels() {
-            pixels.remove(&p);
+            cloned.remove(&p);
         }
 
-        if bricks
+        let mut candidates = bricks
             .iter()
-            .filter(|&b| b != candidate)
-            .all(|b| b.supported(&pixels))
-        {
-            println!("#{} can be removed", i + 1);
+            .filter(|&x| x != candidate)
+            .cloned()
+            .collect_vec();
+        loop {
+            let mut change = false;
+            for f in candidates.iter_mut() {
+                if !f.2 && !f.supported(&cloned) {
+                    f.2 = true;
+                    for p in f.get_pixels() {
+                        cloned.remove(&p);
+                    }
+                    change = true;
+                }
+            }
+            if !change {
+                break;
+            }
+        }
+
+        let fallen = candidates.iter().filter(|&x| x.2).count();
+        totalus += fallen;
+
+        if fallen > 0 {
+            // println!("#{} fall count: {}", i + 1, fallen);
             counter += 1;
         }
 
         for p in candidate.get_pixels() {
-            pixels.insert(p);
+            cloned.insert(p);
         }
-
-        assert_eq!(bricks.iter().map(|x| x.vol()).sum::<usize>(), pixels.len());
     }
 
     println!("max z {:?}", pixels.iter().map(|p| p[2]).max());
 
     println!("COUNTER = {counter}");
+    println!("TOTALUS = {totalus}");
 }
