@@ -10,7 +10,10 @@ type Point = Vec<i32>;
 struct Brick(Point, Point);
 
 fn new_point(part: &str) -> Vec<i32> {
-    let mut v = part.split(',').map(|x| x.parse::<i32>().unwrap()).collect_vec();
+    let mut v = part
+        .split(',')
+        .map(|x| x.parse::<i32>().unwrap())
+        .collect_vec();
     v
 }
 
@@ -24,7 +27,6 @@ impl Brick {
         for x in self.0[0]..=self.1[0] {
             for y in self.0[1]..=self.1[1] {
                 for z in self.0[2]..=self.1[2] {
-                    
                     pixels.push(vec![x, y, z]);
                 }
             }
@@ -50,13 +52,17 @@ impl Brick {
         false
     }
 
-    fn fall_down(& mut self) {        
+    fn fall_down(&mut self) {
         self.0[2] -= 1;
         self.1[2] -= 1;
     }
 
     fn vol(&self) -> usize {
-        self.1.iter().zip(&self.0).map(|(&x, y)| x as usize - *y as usize + 1).product()
+        self.1
+            .iter()
+            .zip(&self.0)
+            .map(|(&x, y)| x as usize - *y as usize + 1)
+            .product()
     }
 }
 
@@ -94,10 +100,10 @@ fn main() {
                 for p in b.get_pixels() {
                     pixels.insert(p);
                 }
-            }       
+            }
         }
     }
-  
+
     assert_eq!(bricks.iter().map(|x| x.vol()).sum::<usize>(), pixels.len());
 
     let cloned_pixels = pixels.clone();
@@ -109,7 +115,11 @@ fn main() {
             pixels.remove(&p);
         }
 
-        if bricks.iter().filter(|&b| b != candidate).all(|b| b.supported(&pixels)) {
+        if bricks
+            .iter()
+            .filter(|&b| b != candidate)
+            .all(|b| b.supported(&pixels))
+        {
             println!("#{} can be removed", i + 1);
             counter += 1;
         }
