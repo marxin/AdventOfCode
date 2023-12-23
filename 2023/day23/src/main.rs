@@ -10,44 +10,27 @@ struct Point(i32, i32);
 #[allow(dead_code)]
 const MOVES: [Point; 4] = [Point(0, 1), Point(1, 0), Point(0, -1), Point(-1, 0)];
 
-fn is_valid_move(direction: &Point, pixel: &char) -> bool {
-    match (pixel, direction) {
-        ('>', Point(1, 0)) | ('<', Point(-1, 0)) | ('v', Point(0, 1)) | ('^', Point(0, -1)) => true,
-        ('.', ..) => true,
-        _ => false,
-    }
-}
-
-fn visit_all(
+fn visit(
     pos: &Point,
     end: &Point,
-    mut map: HashMap<Point, char>,
+    cross_roads: &HashMap<Point, Vec<(Point, usize)>>,
+    seen: &mut HashSet<Point>,
     steps: usize,
     maximum: &mut usize,
 ) {
     if pos == end {
         if steps > *maximum {
             *maximum = steps;
+            println!("new best steps: {steps}");
         }
+        return;
     }
 
-    let mut candidates = Vec::new();
-    for m in MOVES.iter() {
-        let p = Point(pos.0 + m.0, pos.1 + m.1);
-        if let Some(v) = map.get(&p) {
-            if is_valid_move(m, v) {
-                candidates.push(p);
-            }
-        }
-    }
-
-    *map.get_mut(&pos).unwrap() = '#';
-
-    if candidates.len() == 1 {
-        visit_all(&candidates[0], end, map, steps + 1, maximum);
-    } else if candidates.len() > 1 {
-        for c in candidates {
-            visit_all(&c, end, map.clone(), steps + 1, maximum);
+    for (next, distance) in &cross_roads[pos] {
+        if !seen.contains(&next) {
+            seen.insert(next.clone());
+            visit(&next, end, cross_roads, seen, steps + distance, maximum);
+            seen.remove(&next);
         }
     }
 }
@@ -64,7 +47,26 @@ fn main() {
     let mut map = HashMap::new();
     for (y, line) in lines.iter().enumerate() {
         for (x, c) in line.chars().enumerate() {
-            map.insert(Point(x as i32, y as i32), c);
+            map.insert(Point(x as i32, y as i32), if c == '#' { c } else { '.' });
+        }
+    }
+
+    let mut cross_roads = HashMap::new();
+    for (p, c) in map.iter() {
+        if c == &'.' {
+            let mut neighbors = 0;
+            for m in MOVES {
+                let next = Point(p.0 + m.0, p.1 + m.1);
+                if let Some(v) = map.get(&next) {
+                    if v == &'.' {
+                        neighbors += 1;
+                    }
+                }
+            }
+
+            if neighbors > 2 {
+                cross_roads.insert(p.clone(), vec![]);
+            }
         }
     }
 
@@ -78,9 +80,44 @@ fn main() {
         .find(|(pos, &c)| pos.1 == height - 1 && c == '.')
         .unwrap()
         .0;
-    println!("{start:?} -> {end:?}");
+
+    cross_roads.insert(start.clone(), vec![]);
+    cross_roads.insert(end.clone(), vec![]);
+
+    for c in cross_roads.clone().keys() {
+        let mut queue = VecDeque::from_iter(vec![(c.clone(), 0)]);
+        let mut seen = HashSet::new();
+
+        while let Some((point, steps)) = queue.pop_front() {
+            if seen.contains(&point) {
+                continue;
+            }
+            seen.insert(point.clone());
+
+            if point != *c && cross_roads.contains_key(&point) {
+                cross_roads.get_mut(&c).unwrap().push((point, steps));
+            } else {
+                for m in MOVES {
+                    let next = Point(point.0 + m.0, point.1 + m.1);
+                    if let Some(v) = map.get(&next) {
+                        if v == &'.' {
+                            queue.push_back((next, steps + 1));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    println!("{cross_roads:?}");
 
     let mut maximum = 0;
-    visit_all(&start, &end, map.clone(), 0, &mut maximum);
-    println!("{maximum}");
+    visit(
+        &start,
+        &end,
+        &cross_roads,
+        &mut HashSet::from_iter(vec![start.clone()]),
+        0,
+        &mut maximum,
+    );
 }
