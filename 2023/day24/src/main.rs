@@ -4,7 +4,7 @@ use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs}
 #[allow(unused)]
 use itertools::Itertools;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Hash, Copy)]
 struct Point(i64, i64);
 
 #[derive(PartialEq, Eq, Debug)]
@@ -24,14 +24,7 @@ fn intersection(l0: &Line, l1: &Line) -> Option<(f64, f64)> {
     let p2 = (l0.vector.1 * l1.vector.0 - l0.vector.0 * l1.vector.1) as f64;
 
     let p = p1 as f64 / p2;
-    if p < 0f64 {
-        return None;
-    }
-
-    let q = (l0.start.0 as f64 + p * l0.vector.0 as f64 - l1.start.0 as f64) / l1.vector.0 as f64;
-    if q < 0f64 {
-        return None;
-    }
+    // let q = (l0.start.0 as f64 + p * l0.vector.0 as f64 - l1.start.0 as f64) / l1.vector.0 as f64;
 
     if !p.is_nan() {
         Some((l0.start.0 as f64 + p * l0.vector.0 as f64, l0.start.1 as f64 + p * l0.vector.1 as f64))
@@ -64,16 +57,28 @@ fn main() {
     }).collect_vec();
 
     let mut total = 0;
+    let mut intersections: Vec<(f64, f64)> = Vec::new();
 
-    for h0 in hailstones.iter() {
-        for h1 in hailstones.iter() {
-            if h0 != h1 {
+    for (i, h0) in hailstones.iter().enumerate() {
+        for (j, h1) in hailstones.iter().enumerate() {
+            if i < j {
                 let int = intersection(h0, h1);
                 // println!("{h0:?} - {h1:?} = {int:?}");
                 if let Some(int) = int {
+                    for i in intersections.iter() {
+                        let d = (i.0 - int.0).abs() + (i.1 - int.1).abs();
+                        if d < 100000f64 {
+                            todo!();
+                        }
+                    }
+
+                    intersections.push(int);
+                    /*
                     if MIN <= int.0 && int.0 <= MAX && MIN <= int.1 && int.1 <= MAX {
                         total += 1;
+                        println!("{int:?}");
                     }
+                    */
                 }
             }
         }
