@@ -3,75 +3,66 @@ use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs}
 
 #[allow(unused)]
 use itertools::Itertools;
-use itertools::put_back;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
-struct Point(i32, i32);
+use rand::prelude::*;
 
-#[allow(dead_code)]
-const MOVES: [Point; 4] = [Point(0, 1), Point(1, 0), Point(0, -1), Point(-1, 0)];
+fn reduce_graph(edges: &Vec<(usize, usize)>, vertices: usize, attempt: usize) -> bool {
+    let mut rng = rand::thread_rng();
+    let mut collapsed = vec![1; vertices];
+    let mut edges = edges.clone();
 
-fn split_in_half(edges: &HashMap<String, Vec<String>>, cut: Vec<(String, String)>) -> usize {
-    let start = edges.keys().next().unwrap().clone();
-    let mut seen = HashSet::new();
-    let mut worklist = VecDeque::from_iter(vec![start]);
+    for _ in 0..vertices - 2 {
+        let (node, removed) = edges.choose(&mut rng).unwrap();
+        collapsed[*node] += collapsed[*removed];
 
-    while let Some(item) = worklist.pop_front() {
-        if !seen.contains(&item) {
-            seen.insert(item.clone());
-            for n in edges.get(&item).unwrap() {
-                let edge = (item.clone(), n.clone());
-                let edge2 = (n.clone(), item.clone());
-                if !cut.contains(&edge) && !cut.contains(&edge2) {
-                    if !seen.contains(n) {
-                        worklist.push_back(n.clone());
-                    }
+        edges = edges
+            .iter()
+            .filter_map(|(src, dest)| {
+                let src = if src == removed { *node } else { *src };
+                let dest = if dest == removed { *node } else { *dest };
+                if src == dest {
+                    None
+                } else {
+                    Some((src, dest))
                 }
-            }
-        }
+            })
+            .collect_vec();
     }
 
-    return seen.len();
+    println!("Attempt #{attempt} with edges: {}", edges.len());
+    if edges.len() == 3 {
+        let a = collapsed[edges[0].0];
+        let b = collapsed[edges[0].1];
+        println!("{a} x {b} = {}", a * b);
+        true
+    } else {
+        false
+    }
 }
 
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let lines = content.lines().collect_vec();
-    let mut edges: HashMap<String, Vec<String>> = HashMap::new();
-    let mut edge_list = Vec::new();
+    let mut vertices = HashMap::new();
+    let mut edges = Vec::new();
 
     for line in lines {
         let parts = line.split(':').collect_vec();
         let src = parts[0].to_string();
+        let count = vertices.len();
+        let src = *vertices.entry(src).or_insert(count);
         for dest in parts[1].split_whitespace() {
             let dest = dest.to_string();
-            edges.entry(src.clone()).and_modify(|e| e.push(dest.clone())).or_insert(vec![dest.clone()]);
-            edges.entry(dest.clone()).and_modify(|e| e.push(src.clone())).or_insert(vec![src.clone()]);
-            edge_list.push((src.clone(), dest.clone()));
+            let count = vertices.len();
+            let dest = *vertices.entry(dest).or_insert(count);
+            edges.push((src, dest));
         }
     }
 
-    for (k, v) in edges.iter() {
-        println!("{}", v.len());
-    }
-
-    todo!();
-
-    for i in 0..edge_list.len() {
-        for j in 0..edge_list.len() {
-            for k in 0..edge_list.len() {
-                let cut = vec![edge_list[i].clone(), edge_list[j].clone(), edge_list[k].clone()];
-                let n = split_in_half(&edges, cut);
-                println!("{i}/{j}/{k}");
-                if n != 1481 {
-                    println!("{n}");
-                    println!("{n}");
-                    panic!();
-                }
-            }
+    for i in 0.. {
+        let done = reduce_graph(&edges, vertices.len(), i);
+        if done {
+            break;
         }
     }
-
-    println!("{edges:?}");
-    println!("{edge_list:?}");
 }
