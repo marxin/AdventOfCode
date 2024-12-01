@@ -30,7 +30,13 @@ fn main() {
 
     let first = lines.iter().map(|x| x.0).sorted().collect_vec();
     let second = lines.iter().map(|x| x.1).sorted().collect_vec();
+    dbg!(first.len());
 
-    let r: i64 = first.iter().zip(second).map(|(a, b)| (a - b).abs()).sum();
-    dbg!(r);
+    let r: i64 = first.iter().zip(&second).map(|(a, b)| (a - b).abs()).sum();
+
+    let sum: i64 = first
+        .iter()
+        .map(|f| f * second.iter().filter(|&x| x == f).count() as i64)
+        .sum();
+    dbg!(sum);
 }
