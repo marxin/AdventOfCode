@@ -10,6 +10,17 @@ struct Point(i32, i32);
 #[allow(dead_code)]
 const MOVES: [Point; 4] = [Point(0, 1), Point(1, 0), Point(0, -1), Point(-1, 0)];
 
+const MOVES_WITH_DIAGONAL: [Point; 8] = [
+    Point(0, 1),
+    Point(1, 0),
+    Point(0, -1),
+    Point(-1, 0),
+    Point(1, 1),
+    Point(1, -1),
+    Point(-1, 1),
+    Point(-1, -1),
+];
+
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let lines = content.lines().collect_vec();
