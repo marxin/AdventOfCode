@@ -22,20 +22,55 @@ const MOVES_WITH_DIAGONAL: [Point; 8] = [
     Point(-1, -1),
 ];
 
-const NEEDLE: &str = "XMAS";
-
-fn contains(start: Point, dir: &Point, letters: &HashMap<Point, char>) -> bool {
-    NEEDLE.chars().enumerate().all(|(i, c)| {
+fn contains(start: Point, needle: &HashMap<Point, char>, letters: &HashMap<Point, char>) -> bool {
+    needle.iter().all(|(pos, c)| {
         letters
-            .get(&Point(
-                start.0 + i as i32 * dir.0,
-                start.1 + i as i32 * dir.1,
-            ))
-            .is_some_and(|v| v == &c)
+            .get(&Point(start.0 + pos.0, start.1 + pos.1))
+            .is_some_and(|v| v == c)
     })
 }
 
+/*
+
+M.S S.S S.M M.M
+.A. .A. .A. .A.
+M.S M.M S.M S.S
+
+
+*/
+
 fn main() {
+    let max_needles = [
+        HashMap::from([
+            (Point(0, 0), 'M'),
+            (Point(2, 0), 'S'),
+            (Point(1, 1), 'A'),
+            (Point(0, 2), 'M'),
+            (Point(2, 2), 'S'),
+        ]),
+        HashMap::from([
+            (Point(0, 0), 'S'),
+            (Point(2, 0), 'S'),
+            (Point(1, 1), 'A'),
+            (Point(0, 2), 'M'),
+            (Point(2, 2), 'M'),
+        ]),
+        HashMap::from([
+            (Point(0, 0), 'S'),
+            (Point(2, 0), 'M'),
+            (Point(1, 1), 'A'),
+            (Point(0, 2), 'S'),
+            (Point(2, 2), 'M'),
+        ]),
+        HashMap::from([
+            (Point(0, 0), 'M'),
+            (Point(2, 0), 'M'),
+            (Point(1, 1), 'A'),
+            (Point(0, 2), 'S'),
+            (Point(2, 2), 'S'),
+        ]),
+    ];
+
     let content = fs::read_to_string("input.txt").unwrap();
     let lines = content.lines().collect_vec();
 
@@ -50,11 +85,11 @@ fn main() {
         }
     }
 
-    let matches = MOVES_WITH_DIAGONAL
+    let matches = max_needles
         .iter()
         .cartesian_product(0..width)
         .cartesian_product(0..height)
-        .filter(|((dir, x), y)| contains(Point(*x, *y), dir, &letters))
+        .filter(|((needle, x), y)| contains(Point(*x, *y), needle, &letters))
         .count();
 
     dbg!(matches);
