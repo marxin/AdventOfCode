@@ -8,7 +8,7 @@ use itertools::Itertools;
 struct Point(i32, i32);
 
 #[allow(dead_code)]
-const MOVES: [Point; 4] = [Point(0, 1), Point(1, 0), Point(0, -1), Point(-1, 0)];
+const MOVES: [Point; 4] = [Point(0, -1), Point(1, 0), Point(0, 1), Point(-1, 0)];
 
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
@@ -31,7 +31,7 @@ fn main() {
     }
 
     let mut pos = pos.unwrap();
-    let mut direction = 2;
+    let mut direction = 0;
 
     let mut visited = HashSet::new();
     loop {
@@ -43,11 +43,7 @@ fn main() {
             break;
         };
         if *value == '#' {
-            direction = if direction == 0 {
-                MOVES.len() - 1
-            } else {
-                direction - 1
-            };
+            direction = (direction + 1) % MOVES.len();
         } else {
             pos = next;
         }
