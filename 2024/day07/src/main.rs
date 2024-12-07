@@ -28,10 +28,11 @@ fn can_solve(total: u64, target: u64, values: &[u64]) -> bool {
     }
 
     let (v, values) = values.split_first().unwrap();
-    if can_solve(total + v, target, values) {
+    if can_solve(total + v, target, values) || can_solve(total * v, target, values) {
         true
     } else {
-        can_solve(total * v, target, values)
+        let v = format!("{total}{v}");
+        can_solve(v.parse().unwrap(), target, values)
     }
 }
 
