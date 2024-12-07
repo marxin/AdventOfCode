@@ -27,10 +27,11 @@ fn can_solve(total: u64, target: u64, values: &[u64]) -> bool {
         return total == target;
     }
 
-    if can_solve(total + values[0], target, &values[1..]) {
+    let (v, values) = values.split_first().unwrap();
+    if can_solve(total + v, target, values) {
         true
     } else {
-        can_solve(total * values[0], target, &values[1..])
+        can_solve(total * v, target, values)
     }
 }
 
