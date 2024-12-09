@@ -26,10 +26,10 @@ fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let lines = content.lines().collect_vec();
 
-    let _width = lines.first().unwrap().len() as i32;
-    let _height = lines.len() as i32;
+    let width = lines.first().unwrap().len() as i32;
+    let height = lines.len() as i32;
 
-    let anthenas: HashMap<_, _> = lines
+    let anthenas = lines
         .iter()
         .enumerate()
         .flat_map(|(y, line)| {
@@ -41,7 +41,31 @@ fn main() {
                 }
             })
         })
-        .collect();
+        .collect_vec();
+
+    let letters = anthenas.iter().map(|x| x.1).unique().collect_vec();
+
+    let mut antinodes = HashSet::new();
+
+    for c in letters {
+        let anthenas = anthenas.iter().filter(|a| a.1 == c).collect_vec();
+        for ((p0, _), (p1, _)) in anthenas.iter().cartesian_product(anthenas.iter()) {
+            if p0 == p1 {
+                continue;
+            }
+            let d1 = Point(p1.0 - p0.0, p1.1 - p0.1);
+            let d2 = Point(p0.0 - p1.0, p0.1 - p1.1);
+            let candadate1 = Point(p1.0 + d1.0, p1.1 + d1.1);
+            let candadate2 = Point(p0.0 + d2.0, p0.1 + d2.1);
+
+            for c in [candadate1, candadate2] {
+                if c.0 >= 0 && c.0 < width && c.1 >= 0 && c.1 < height {
+                    antinodes.insert(c);
+                }
+            }
+        }
+    }
 
     dbg!(anthenas);
+    dbg!(antinodes.len());
 }
