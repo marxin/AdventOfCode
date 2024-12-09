@@ -55,12 +55,14 @@ fn main() {
             }
             let d1 = Point(p1.0 - p0.0, p1.1 - p0.1);
             let d2 = Point(p0.0 - p1.0, p0.1 - p1.1);
-            let candadate1 = Point(p1.0 + d1.0, p1.1 + d1.1);
-            let candadate2 = Point(p0.0 + d2.0, p0.1 + d2.1);
+            //let candadate1 = Point(p1.0 + d1.0, p1.1 + d1.1);
+            //let candadate2 = Point(p0.0 + d2.0, p0.1 + d2.1);
 
-            for c in [candadate1, candadate2] {
-                if c.0 >= 0 && c.0 < width && c.1 >= 0 && c.1 < height {
+            for (c, d) in [(p0, d1), (p1, d2)] {
+                let mut c = *c;
+                while c.0 >= 0 && c.0 < width && c.1 >= 0 && c.1 < height {
                     antinodes.insert(c);
+                    c = Point(c.0 + d.0, c.1 + d.1);
                 }
             }
         }
