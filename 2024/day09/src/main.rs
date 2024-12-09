@@ -36,10 +36,13 @@ fn main() {
     let size = numbers.iter().sum::<u64>();
     let mut vec = vec![None; size as usize];
 
+    let mut tomove = Vec::new();
+
     let mut idx: u64 = 0;
     let mut index = 0;
     for x in numbers.chunks(2) {
         let full = x[0];
+        tomove.push((index as usize, full as usize, idx));
         for i in 0..full {
             vec[(index + i) as usize] = Some(idx);
         }
@@ -51,23 +54,36 @@ fn main() {
         idx += 1;
     }
 
-    println!("{vec:?}");
+    tomove.reverse();
 
-    let mut start = 0;
+    //println!("{vec:?}");
+
     let mut end = vec.len() - 1;
 
-    while start < end {
-        while vec[end].is_none() {
-            end -= 1;
-        }
+    println!("{}", tomove.len());
+    let digits: usize = tomove.iter().map(|x| x.1).sum();
+    for (pos, length, idx) in tomove {
+        let mut start = 0usize;
 
-        let s = vec[start];
-        if s.is_none() {
-            vec[start] = vec[end];
-            vec[end] = None;
+        while start < pos {
+            if vec[start].is_some() {
+                start += 1;
+                continue;
+            } else if vec.iter().skip(start).take(length).all(|x| x.is_none()) {
+                vec.iter_mut()
+                    .skip(start)
+                    .take(length)
+                    .for_each(|x| *x = Some(idx));
+                vec.iter_mut()
+                    .skip(pos)
+                    .take(length)
+                    .for_each(|x| *x = None);
+                // println!("Moved to {start}");
+                break;
+            } else {
+                start += 1;
+            }
         }
-
-        start += 1;
     }
 
     let s = vec
@@ -76,6 +92,7 @@ fn main() {
         .map(|(i, v)| if let Some(v) = v { i as u64 * v } else { 0 })
         .sum::<u64>();
 
-    println!("{vec:?}");
+    let digits_after: usize = vec.iter().filter(|x| x.is_some()).count();
+    assert_eq!(digits, digits_after);
     dbg!(s);
 }
