@@ -39,6 +39,25 @@ impl Sub<Point> for Point {
     }
 }
 
+fn visit(pos: Point, map: &HashMap<Point, i32>) -> u64 {
+    if map[&pos] == 9 {
+        return 1;
+    }
+
+    MOVES
+        .iter()
+        .filter_map(|m| {
+            let pos2 = pos + *m;
+            if let Some(v2) = map.get(&pos2) {
+                if *v2 == map[&pos] + 1 {
+                    return Some(visit(pos2, map));
+                }
+            }
+            None
+        })
+        .sum()
+}
+
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let lines = content.lines().collect_vec();
@@ -60,22 +79,8 @@ fn main() {
 
     let mut c = 0;
     for (start, _) in map.iter().filter(|(_, v)| **v == 0) {
-        let mut work = VecDeque::from([*start]);
-        let mut reachable = HashSet::from([*start]);
-
-        while let Some(pos) = work.pop_front() {
-            for m in MOVES {
-                let pos2 = pos + m;
-                if let Some(v2) = map.get(&pos2) {
-                    if *v2 == map[&pos] + 1 && !reachable.contains(&pos2) {
-                        reachable.insert(pos2);
-                        work.push_back(pos2);
-                    }
-                }
-            }
-        }
-
-        c += reachable.iter().filter(|p| map[p] == 9).count();
+        let rating = visit(*start, &map);
+        c += rating;
     }
 
     dbg!(c);
