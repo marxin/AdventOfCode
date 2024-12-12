@@ -91,18 +91,25 @@ fn main() {
         .map(|group| {
             let value = map[group.iter().next().unwrap()];
             let area = group.len();
-            let perimeter: usize = group
+
+            let perimeter = MOVES
                 .iter()
-                .map(|p| {
-                    MOVES
+                .map(|m| {
+                    let borders: HashMap<_, _> = group
                         .iter()
-                        .filter(|m| {
-                            let p2 = *p + **m;
-                            map.get(&p2) != Some(&value)
+                        .filter_map(|p| {
+                            let next = *p + *m;
+                            if map.get(&next).map(|&v| v != value).is_none_or(|x| x) {
+                                Some((*p, ()))
+                            } else {
+                                None
+                            }
                         })
-                        .count()
+                        .collect();
+                    flood_fill(&borders, &MOVES, |_, _, _, _| true).len()
                 })
-                .sum();
+                .sum::<usize>();
+
             area * perimeter
         })
         .sum::<usize>();
