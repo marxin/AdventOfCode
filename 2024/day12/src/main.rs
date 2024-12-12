@@ -39,18 +39,14 @@ const MOVES_WITH_DIAGONAL: [Point; 8] = [
     Point(-1, -1),
 ];
 
-fn main() {
-    let content = fs::read_to_string("input.txt").unwrap();
-    let lines = content.lines().collect_vec();
-
-    let map = HashMap::<_, _>::from_iter(lines.iter().enumerate().flat_map(|(y, line)| {
-        line.chars()
-            .enumerate()
-            .map(move |(x, c)| (Point(x as i32, y as i32), c))
-    }));
-
-    let mut total = 0;
+fn flood_fill<T: Clone, F: Fn(&Point, &T, &Point, &T) -> bool>(
+    map: &HashMap<Point, T>,
+    directions: &[Point],
+    predicate: F,
+) -> Vec<HashSet<Point>> {
+    let mut groups = Vec::new();
     let mut visited = HashSet::new();
+
     for (point, c) in map.iter() {
         if visited.contains(point) {
             continue;
@@ -61,35 +57,55 @@ fn main() {
         let mut queue = VecDeque::from([*point]);
 
         while let Some(p) = queue.pop_front() {
-            visited.insert(p);
-
-            for m in MOVES.iter() {
+            for m in directions.iter() {
                 let next = p + *m;
-                if map.get(&next) == Some(c) && !group.contains(&next) {
-                    queue.push_back(next);
-                    group.insert(next);
+                if let Some(v) = map.get(&next) {
+                    if predicate(&p, c, &next, v) && !visited.contains(&next) {
+                        queue.push_back(next);
+                        group.insert(next);
+                        visited.insert(next);
+                    }
                 }
             }
         }
 
-        let area = group.len();
-        let perimeter: usize = group
-            .iter()
-            .map(|p| {
-                MOVES
-                    .iter()
-                    .filter(|m| {
-                        let p2 = *p + **m;
-                        map.get(&p2) != Some(c)
-                    })
-                    .count()
-            })
-            .sum();
-        // println!("{area} {perimeter}");
-        total += area * perimeter;
+        groups.push(group);
     }
 
-    dbg!(total);
+    groups
+}
 
-    // dbg!(map);
+fn main() {
+    let content = fs::read_to_string("input.txt").unwrap();
+    let lines = content.lines().collect_vec();
+
+    let map = HashMap::<_, _>::from_iter(lines.iter().enumerate().flat_map(|(y, line)| {
+        line.chars()
+            .enumerate()
+            .map(move |(x, c)| (Point(x as i32, y as i32), c))
+    }));
+
+    let groups = flood_fill(&map, &MOVES, |_, val, _, next_val| val == next_val);
+    let sum = groups
+        .iter()
+        .map(|group| {
+            let value = map[group.iter().next().unwrap()];
+            let area = group.len();
+            let perimeter: usize = group
+                .iter()
+                .map(|p| {
+                    MOVES
+                        .iter()
+                        .filter(|m| {
+                            let p2 = *p + **m;
+                            map.get(&p2) != Some(&value)
+                        })
+                        .count()
+                })
+                .sum();
+            area * perimeter
+        })
+        .sum::<usize>();
+
+    dbg!(sum);
 }
