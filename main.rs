@@ -39,6 +39,43 @@ const MOVES_WITH_DIAGONAL: [Point; 8] = [
     Point(-1, -1),
 ];
 
+#[allow(dead_code)]
+fn flood_fill<T: Clone, F: Fn(&Point, &T, &Point, &T) -> bool>(
+    map: &HashMap<Point, T>,
+    directions: &[Point],
+    predicate: F,
+) -> Vec<HashSet<Point>> {
+    let mut groups = Vec::new();
+    let mut visited = HashSet::new();
+
+    for (point, c) in map.iter() {
+        if visited.contains(point) {
+            continue;
+        }
+        visited.insert(*point);
+
+        let mut group = HashSet::from([*point]);
+        let mut queue = VecDeque::from([*point]);
+
+        while let Some(p) = queue.pop_front() {
+            for m in directions.iter() {
+                let next = p + *m;
+                if let Some(v) = map.get(&next) {
+                    if predicate(&p, c, &next, v) && !visited.contains(&next) {
+                        queue.push_back(next);
+                        group.insert(next);
+                        visited.insert(next);
+                    }
+                }
+            }
+        }
+
+        groups.push(group);
+    }
+
+    groups
+}
+
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let lines = content.lines().collect_vec();
