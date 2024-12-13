@@ -6,7 +6,7 @@ use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs}
 use itertools::Itertools;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
-struct Point(i32, i32);
+struct Point(i64, i64);
 
 impl Add<Point> for Point {
     type Output = Point;
@@ -21,6 +21,14 @@ impl Sub<Point> for Point {
 
     fn sub(self, rhs: Point) -> Self::Output {
         Point(self.0 - rhs.0, self.1 - rhs.1)
+    }
+}
+
+impl Mul<i64> for Point {
+    type Output = Point;
+
+    fn mul(self, rhs: i64) -> Self::Output {
+        Point(self.0 * rhs, self.1 * rhs)
     }
 }
 
