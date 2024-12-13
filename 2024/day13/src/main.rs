@@ -6,7 +6,7 @@ use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs}
 use itertools::Itertools;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
-struct Point(i32, i32);
+struct Point(i64, i64);
 
 impl Add<Point> for Point {
     type Output = Point;
@@ -24,10 +24,10 @@ impl Sub<Point> for Point {
     }
 }
 
-impl Mul<i32> for Point {
+impl Mul<i64> for Point {
     type Output = Point;
 
-    fn mul(self, rhs: i32) -> Self::Output {
+    fn mul(self, rhs: i64) -> Self::Output {
         Point(self.0 * rhs, self.1 * rhs)
     }
 }
@@ -91,29 +91,25 @@ fn main() {
         Point(parts[1].parse().unwrap(), parts[3].parse().unwrap())
     };
 
-    const LIMIT: i32 = 100;
+    const ADD: i64 = 10000000000000;
 
     let mut total = 0;
 
     for game in content.split("\n\n") {
         let lines = game.lines().collect_vec();
-        let button_a = parse_button(lines[0], '+');
-        let button_b = parse_button(lines[1], '+');
-        let prize = parse_button(lines[2], '=');
+        let a = parse_button(lines[0], '+');
+        let b = parse_button(lines[1], '+');
+        let c = parse_button(lines[2], '=') + Point(ADD, ADD);
+        //dbg!(a, b, c);
 
-        let minimum = (0..=LIMIT)
-            .cartesian_product((0..=LIMIT))
-            .filter_map(|(x, y)| {
-                let final_pos = button_a * x + button_b * y;
-                if prize == final_pos {
-                    Some(3 * x + y)
-                } else {
-                    None
-                }
-            })
-            .min();
-        if let Some(minimum) = minimum {
-            total += minimum;
+        let coeff_b = (a.0 * c.1 - c.0 * a.1) / (a.0 * b.1 - b.0 * a.1);
+        let coeff_a = (c.0 - coeff_b * b.0) / a.0;
+        // dbg!(coeff_a, coeff_b);
+        let dx = c.0 - (a.0 * coeff_a + coeff_b * b.0);
+        let dy = c.1 - (a.1 * coeff_a + coeff_b * b.1);
+
+        if dx == 0 && dy == 0 {
+            total += 3 * coeff_a + coeff_b;
         }
     }
 
