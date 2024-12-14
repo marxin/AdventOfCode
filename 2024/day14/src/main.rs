@@ -32,6 +32,22 @@ impl Mul<i64> for Point {
     }
 }
 
+#[allow(unused)]
+struct Rect {
+    top_left: Point,
+    bottom_right: Point,
+}
+
+impl Rect {
+    #[allow(dead_code)]
+    fn contains(&self, p: &Point) -> bool {
+        self.top_left.0 <= p.0
+            && p.0 < self.bottom_right.0
+            && self.top_left.1 <= p.1
+            && p.1 < self.bottom_right.1
+    }
+}
+
 #[allow(dead_code)]
 const MOVES: [Point; 4] = [Point(0, 1), Point(1, 0), Point(0, -1), Point(-1, 0)];
 
@@ -84,15 +100,80 @@ fn flood_fill<T: Clone, F: Fn(&Point, &T, &Point, &T) -> bool>(
     groups
 }
 
+#[derive(Debug, Clone)]
+struct Robot {
+    pos: Point,
+    vel: Point,
+}
+
+const WIDTH: i64 = 101;
+const HEIGHT: i64 = 103;
+
+impl Robot {
+    fn new(line: &str) -> Self {
+        let parts = line.split_ascii_whitespace().collect_vec();
+        let p = parts[0][2..].split(',').collect_vec();
+        let v = parts[1][2..].split(',').collect_vec();
+
+        Self {
+            pos: Point(p[0].parse().unwrap(), p[1].parse().unwrap()),
+            vel: Point(v[0].parse().unwrap(), v[1].parse().unwrap()),
+        }
+    }
+}
+
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let lines = content.lines().collect_vec();
 
-    let _width = lines.first().unwrap().len() as i32;
-    let _height = lines.len() as i32;
+    let mut robots = lines.iter().map(|line| Robot::new(line)).collect_vec();
 
-    #[allow(unused)]
-    for (y, line) in lines.iter().enumerate() {
-        println!("{line}")
+    for _ in 0..100 {
+        robots = robots
+            .into_iter()
+            .map(|r| {
+                let mut x = (r.pos.0 + r.vel.0) % WIDTH;
+                if x < 0 {
+                    x += WIDTH;
+                }
+                let mut y = (r.pos.1 + r.vel.1) % HEIGHT;
+                if y < 0 {
+                    y += HEIGHT;
+                }
+                Robot {
+                    pos: Point(x, y),
+                    vel: r.vel,
+                }
+            })
+            .collect_vec();
     }
+
+    const QUADRANTS: [Rect; 4] = [
+        Rect {
+            top_left: Point(0, 0),
+            bottom_right: Point(WIDTH / 2, HEIGHT / 2),
+        },
+        Rect {
+            top_left: Point(WIDTH - WIDTH / 2, 0),
+            bottom_right: Point(WIDTH, HEIGHT / 2),
+        },
+        Rect {
+            top_left: Point(0, HEIGHT - HEIGHT / 2),
+            bottom_right: Point(WIDTH / 2, HEIGHT),
+        },
+        Rect {
+            top_left: Point(WIDTH - WIDTH / 2, HEIGHT - HEIGHT / 2),
+            bottom_right: Point(WIDTH, HEIGHT),
+        },
+    ];
+
+    // dbg!(&robots);
+
+    let counts = QUADRANTS
+        .iter()
+        .map(|q| robots.iter().filter(|r| q.contains(&r.pos)).count())
+        .collect_vec();
+
+    dbg!(&counts);
+    dbg!(counts.iter().fold(1, |acc, v| acc * v));
 }
