@@ -175,5 +175,5 @@ fn main() {
         .collect_vec();
 
     dbg!(&counts);
-    dbg!(counts.iter().fold(1, |acc, v| acc * v));
+    dbg!(counts.iter().product::<usize>());
 }
