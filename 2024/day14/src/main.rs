@@ -100,7 +100,7 @@ fn flood_fill<T: Clone, F: Fn(&Point, &T, &Point, &T) -> bool>(
     groups
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 struct Robot {
     pos: Point,
     vel: Point,
@@ -122,13 +122,30 @@ impl Robot {
     }
 }
 
+fn print_robots(robots: &HashSet<Point>) {
+    for y in 0..HEIGHT {
+        for x in 0..WIDTH {
+            if robots.contains(&Point(x, y)) {
+                print!("#");
+            } else {
+                print!(".");
+            }
+        }
+        println!();
+    }
+    println!();
+    println!();
+}
+
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let lines = content.lines().collect_vec();
 
     let mut robots = lines.iter().map(|line| Robot::new(line)).collect_vec();
 
-    for _ in 0..100 {
+    // let mut seen = HashSet::new();
+
+    for i in 0..10000 {
         robots = robots
             .into_iter()
             .map(|r| {
@@ -146,6 +163,13 @@ fn main() {
                 }
             })
             .collect_vec();
+
+        let set: HashSet<Point> = robots.iter().map(|r| r.pos).collect();
+        let x = i + 1;
+        if (x - 1033) % WIDTH == 0 {
+            println!("#{}", i + 1);
+            print_robots(&set);
+        }
     }
 
     const QUADRANTS: [Rect; 4] = [
