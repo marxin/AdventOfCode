@@ -88,8 +88,8 @@ fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let lines = content.lines().collect_vec();
 
-    let _width = lines.first().unwrap().len() as i32;
-    let _height = lines.len() as i32;
+    let _width = lines.first().unwrap().len() as i64;
+    let _height = lines.len() as i64;
 
     #[allow(unused)]
     for (y, line) in lines.iter().enumerate() {
