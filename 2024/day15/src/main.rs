@@ -100,6 +100,18 @@ fn print_map(map: &HashMap<Point, char>, width: i64, height: i64, pos: &Point) {
     println!();
 }
 
+fn move_obstacles(map: &mut HashMap<Point, char>, obstacles: Vec<Point>, m: Point) {
+    let with_vals = obstacles.iter().map(|o| (o, map[o])).collect_vec();
+
+    for o in obstacles.iter() {
+        map.insert(*o, '.');
+    }
+
+    for (p, c) in with_vals {
+        map.insert(*p + m, c);
+    }
+}
+
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let (map_part, commands_part) = content.split_once("\n\n").unwrap();
@@ -115,43 +127,73 @@ fn main() {
 
     let lines = map_part.lines().collect_vec();
 
-    let width = lines.first().unwrap().len() as i64;
+    let width = 2 * lines.first().unwrap().len() as i64;
     let height = lines.len() as i64;
 
     for (y, line) in lines.iter().enumerate() {
         for (x, c) in line.chars().enumerate() {
-            let p = Point(x as i64, y as i64);
+            let p = Point(2 * x as i64, y as i64);
+            let p2 = Point((2 * x) as i64 + 1, y as i64);
             match c {
                 '@' => {
                     map.insert(p, '.');
+                    map.insert(p2, '.');
                     start = Some(p);
                 }
-                c @ ('#' | '.' | 'O') => {
+                c @ ('#' | '.') => {
                     map.insert(p, c);
+                    map.insert(p2, c);
+                }
+                'O' => {
+                    map.insert(p, '[');
+                    map.insert(p2, ']');
                 }
                 _ => todo!("unexpected token"),
             }
         }
     }
     let mut pos = start.unwrap();
-    print_map(&map, width, height, &pos);
+    // print_map(&map, width, height, &pos);
 
     for (i, &m) in moves.iter().enumerate() {
         let next = pos + m;
         if map[&next] == '.' {
             pos = next;
+        } else if map[&next] == '#' {
+        } else if m == Point(0, -1) || m == Point(0, 1) {
+            let get_pair = |p: &Point| -> Vec<Point> {
+                let c = map.get(p);
+                match c {
+                    Some('[') => vec![*p, *p + Point(1, 0)],
+                    Some(']') => vec![*p + Point(-1, 0), *p],
+                    _ => Vec::new(),
+                }
+            };
+
+            let next = pos + m;
+            let mut queue = VecDeque::from([next]);
+            let mut tomove = Vec::from([next]);
+
+            while let Some(todo) = queue.pop_front() {
+                for p in get_pair(&todo) {
+                    tomove.push(p);
+                    queue.push_back(p + m);
+                }
+            }
+            if tomove.iter().all(|p| {
+                let next = *p + m;
+                matches!(map[&next], '[' | ']' | '.')
+            }) {
+                move_obstacles(&mut map, tomove, m);
+                pos = next;
+            }
         } else {
             let obstacles = (1i64..)
                 .map(|i| pos + m * i)
-                .take_while(|p| map[p] == 'O')
+                .take_while(|p| ['[', ']'].contains(&map[p]))
                 .collect_vec();
             if !obstacles.is_empty() && map[&(pos + m * ((obstacles.len() as i64) + 1))] == '.' {
-                for o in obstacles.iter().rev() {
-                    map.insert(*o, '.');
-                }
-                for o in obstacles.into_iter() {
-                    map.insert(o + m, 'O');
-                }
+                move_obstacles(&mut map, obstacles, m);
                 pos = next;
             }
         }
@@ -162,7 +204,7 @@ fn main() {
     let score = map
         .iter()
         .filter_map(|(p, v)| {
-            if *v == 'O' {
+            if *v == '[' {
                 Some(p.0 + 100 * p.1)
             } else {
                 None
