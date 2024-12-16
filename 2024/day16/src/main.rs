@@ -148,7 +148,7 @@ fn main() {
         steps: 0,
     };
 
-    let mut best_known = HashMap::from([((current.pos, current.orient), 0usize)]);
+    let mut best_known = HashMap::from([((current.pos, current.orient), (0usize, Vec::new()))]);
     let mut queue = BinaryHeap::from([current]);
 
     const ROTATE_PRICE: usize = 1000;
@@ -183,17 +183,42 @@ fn main() {
         for cand in candidates {
             let value = best_known
                 .entry((cand.pos, cand.orient))
-                .or_insert_with(|| usize::MAX);
-            if cand.steps < *value {
-                *value = cand.steps;
+                .or_insert_with(|| (usize::MAX, Vec::new()));
+            if cand.steps < value.0 {
+                value.0 = cand.steps;
+                value.1 = vec![(conf.pos, conf.orient)];
                 queue.push(cand);
+            } else if cand.steps == value.0 {
+                value.1.push((conf.pos, conf.orient));
             }
         }
     }
 
-    let ends = best_known
+    let mut best = HashSet::new();
+
+    let mut ends = best_known
         .iter()
-        .filter(|&((pos, _orient), v)| *pos == end)
+        .filter(|&((pos, _orient), _v)| *pos == end)
         .collect_vec();
-    dbg!(ends.iter().map(|x| x.1).min());
+    ends.sort_by_key(|x| x.1.0);
+    let min_steps = ends[0].1.0;
+    let mut worklist = VecDeque::new();
+
+    for item in ends.iter() {
+        if item.1.0 == min_steps {
+            for x in item.1.1.iter() {
+                worklist.push_back(x);
+                best.insert(x.0);
+            }
+        }
+    }
+
+    while let Some(item) = worklist.pop_front() {
+        best.insert(item.0);
+        for prev in best_known.get(item).unwrap().1.iter() {
+            worklist.push_back(prev);
+        }
+    }
+
+    dbg!(best.len() + 1);
 }
