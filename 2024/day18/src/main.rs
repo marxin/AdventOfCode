@@ -84,23 +84,12 @@ fn flood_fill<T: Clone, F: Fn(&Point, &T, &Point, &T) -> bool>(
     groups
 }
 
-fn main() {
-    let content = fs::read_to_string("input.txt").unwrap();
-    let lines = content.lines().collect_vec();
-
-    let mut map = HashSet::new();
-
+fn contains_path(points: &[Point]) -> bool {
     const WIDTH: i64 = 71;
     const HEIGHT: i64 = WIDTH;
 
-    #[allow(unused)]
-    for line in lines.iter().take(1024) {
-        let parts = line.split_once(",").unwrap();
-        map.insert(Point(parts.0.parse().unwrap(), parts.1.parse().unwrap()));
-    }
-    assert_eq!(map.len(), 1024);
-
-    let mut start = Point(0, 0);
+    let map: HashSet<_> = points.iter().collect();
+    let start = Point(0, 0);
     let end = Point(WIDTH - 1, HEIGHT - 1);
 
     let mut steps = HashMap::from([(start, 0)]);
@@ -123,5 +112,26 @@ fn main() {
         }
     }
 
-    dbg!(steps[&end]);
+    steps.contains_key(&end)
+}
+
+fn main() {
+    let content = fs::read_to_string("input.txt").unwrap();
+    let lines = content.lines().collect_vec();
+
+    let points = lines
+        .iter()
+        .map(|line| {
+            let parts = line.split_once(",").unwrap();
+            Point(parts.0.parse().unwrap(), parts.1.parse().unwrap())
+        })
+        .collect_vec();
+
+    for i in 0..points.len() {
+        if !contains_path(&points[..i]) {
+            dbg!(i);
+            dbg!(points[i - 1]);
+            break;
+        }
+    }
 }
