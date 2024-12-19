@@ -87,9 +87,9 @@ fn flood_fill<T: Clone, F: Fn(&Point, &T, &Point, &T) -> bool>(
     groups
 }
 
-fn can_make<'a>(
+fn can_make(
     todo: &'static str,
-    towels: &'a Vec<&'static str>,
+    towels: &Vec<&'static str>,
     seen: &mut HashMap<&'static str, usize>,
 ) -> usize {
     if todo.is_empty() {
