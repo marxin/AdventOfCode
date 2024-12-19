@@ -100,12 +100,16 @@ fn can_make(
         return *times;
     }
 
-    let mut times = 0;
-    for t in towels.iter() {
-        if let Some(rest) = todo.strip_prefix(t) {
-            times += can_make(rest, towels, seen);
-        }
-    }
+    let times = towels
+        .iter()
+        .map(|t| {
+            if let Some(rest) = todo.strip_prefix(t) {
+                can_make(rest, towels, seen)
+            } else {
+                0
+            }
+        })
+        .sum();
 
     seen.insert(todo, times);
     times
