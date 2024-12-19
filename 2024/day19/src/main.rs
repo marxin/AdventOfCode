@@ -87,21 +87,28 @@ fn flood_fill<T: Clone, F: Fn(&Point, &T, &Point, &T) -> bool>(
     groups
 }
 
-fn can_make(todo: &'static str, towels: &Vec<&str>, seen: &mut HashSet<&'static str>) -> bool {
+fn can_make<'a>(
+    todo: &'static str,
+    towels: &'a Vec<&'static str>,
+    seen: &mut HashMap<&'static str, usize>,
+) -> usize {
     if todo.is_empty() {
-        return true;
+        return 1;
     }
 
-    if !seen.insert(todo) {
-        return false;
+    if let Some(times) = seen.get(todo) {
+        return *times;
     }
-    towels.iter().any(|&t| {
-        if todo.starts_with(t) {
-            can_make(&todo[t.len()..], towels, seen)
-        } else {
-            false
+
+    let mut times = 0;
+    for t in towels.iter() {
+        if let Some(rest) = todo.strip_prefix(t) {
+            times += can_make(rest, towels, seen);
         }
-    })
+    }
+
+    seen.insert(todo, times);
+    times
 }
 
 fn main() {
@@ -110,9 +117,12 @@ fn main() {
     let mut towels = towels.trim().split(", ").collect_vec();
     towels.sort_by_key(|x| Reverse(x.len()));
     let patterns = patterns.lines().collect_vec();
-    let count = patterns
-        .iter()
-        .filter(|p| can_make(p, &towels, &mut HashSet::new()))
-        .count();
-    dbg!(count);
+    let mut total = 0;
+    for p in patterns {
+        let times = can_make(p, &towels, &mut HashMap::new());
+        // dbg!(times);
+        total += times;
+    }
+
+    dbg!(total);
 }
