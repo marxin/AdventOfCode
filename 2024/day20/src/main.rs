@@ -8,6 +8,12 @@ use itertools::Itertools;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
 struct Point(i64, i64);
 
+impl Point {
+    fn distance(&self, other: &Point) -> usize {
+        ((self.0 - other.0).abs() + (self.1 - other.1).abs()) as usize
+    }
+}
+
 impl Add<Point> for Point {
     type Output = Point;
 
@@ -176,45 +182,28 @@ fn main() {
         .collect();
     // dbg!(&best_times);
 
-    let candidates = walls
-        .iter()
-        .flat_map(|p| MOVES.iter().map(|m| (*p - *m, *p, *p + *m)))
-        .filter(|p| maze.contains(&p.0) && maze.contains(&p.2))
-        .collect_vec();
-
-    dbg!(candidates.len());
     let mut histogram: HashMap<usize, usize> = HashMap::new();
     let mut total = 0;
 
-    for (_i, hack) in candidates.iter().enumerate() {
-        assert!(walls.contains(&hack.1));
-        if let Some(&before) = best_times.get(&hack.0) {
-            if let Some(&after) = best_times.get(&hack.2) {
-                if after + 2 < before {
-                    let diff = before - after - 2;
-                    *histogram.entry(diff).or_default() += 1;
-                    if diff >= 100 {
-                        total += 1;
-                    }
-                }
-            }
-        }
-        /*
-        let mut cloned_maze = maze.clone();
-        cloned_maze.insert(hack.0);
+    const CHEAT_SIZE: usize = 20;
 
-        if let Some((steps, path)) = fastest_path(&cloned_maze, &start, &end, default_path) {
-            if let Some(idx) = path.iter().position(|x| x == &hack.0) {
-                if path.get(idx + 1) == Some(&hack.1) {
-                    let diff = default_path - steps;
-                    *histogram.entry(diff).or_default() += 1;
-                    if diff >= 100 {
-                        total += 1;
+    for point in maze.iter() {
+        for end in maze.iter() {
+            let dist = end.distance(point);
+            if dist <= CHEAT_SIZE {
+                if let Some(&before) = best_times.get(point) {
+                    if let Some(&after) = best_times.get(end) {
+                        if after + dist < before {
+                            let diff = before - after - dist;
+                            //*histogram.entry(diff).or_default() += 1;
+                            if diff >= 100 {
+                                total += 1;
+                            }
+                        }
                     }
                 }
             }
         }
-        */
     }
 
     /*
