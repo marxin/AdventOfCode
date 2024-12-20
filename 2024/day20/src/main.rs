@@ -48,33 +48,91 @@ const MOVES_WITH_DIAGONAL: [Point; 8] = [
 ];
 
 #[allow(dead_code)]
-fn fastest_path(map: &HashSet<Point>, start: &Point, end: &Point, hacks: (Point, Point)) -> usize {
+fn fastest_path(
+    map: &HashSet<Point>,
+    start: &Point,
+    end: &Point,
+    limit: usize,
+) -> Option<(usize, Vec<Point>)> {
     let mut todo = VecDeque::from([(*start, 0)]);
     let mut visited = HashMap::from([(*start, 0)]);
 
     while let Some((pos, steps)) = todo.pop_front() {
         for m in MOVES.iter() {
             let next = pos + *m;
-            if !visited.contains_key(&next) {
-                if map.contains(&next) {
-                    visited.insert(next, steps + 1);
-                    todo.push_back((next, steps + 1));
-                } else if next == hacks.0 {
-                    visited.insert(hacks.0, steps + 1);
-                    todo.push_back((hacks.0, steps + 1));
-                    visited.insert(hacks.1, steps + 2);
-                    todo.push_back((hacks.1, steps + 2));
+            if !visited.contains_key(&next) && map.contains(&next) {
+                visited.insert(next, steps + 1);
+                if &next == end {
+                    break;
                 }
+                todo.push_back((next, steps + 1));
             }
         }
     }
 
-    visited[end]
+    let mut pos = *end;
+    let mut steps = visited[end];
+    if steps >= limit {
+        return None;
+    }
+    let mut path = Vec::new();
+
+    while &pos != start {
+        let previous = MOVES
+            .iter()
+            .map(|m| pos + *m)
+            .filter(|p| visited.get(p) == Some(&(steps - 1)))
+            .exactly_one()
+            .unwrap();
+        path.push(previous);
+        steps -= 1;
+        pos = previous;
+    }
+    path.reverse();
+
+    Some((visited[end], path))
+}
+
+fn print_map(
+    maze: &HashSet<Point>,
+    width: i64,
+    height: i64,
+    start: &Point,
+    end: &Point,
+    path: &Vec<Point>,
+    hack: &(Point, Point),
+) {
+    for y in 0..height {
+        for x in 0..width {
+            let p = Point(x, y);
+            if &p == start {
+                print!("S");
+            } else if &p == end {
+                print!("E");
+            } else if p == hack.0 {
+                print!("1")
+            } else if p == hack.1 {
+                print!("2")
+            } else if path.contains(&p) {
+                print!("█");
+            } else if maze.contains(&p) {
+                print!(".")
+            } else {
+                print!("#")
+            }
+        }
+        println!();
+    }
+    println!();
+    println!();
 }
 
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let lines = content.lines().collect_vec();
+
+    let width = lines.first().unwrap().len() as i64;
+    let height = lines.len() as i64;
 
     let mut maze = HashSet::new();
     let mut walls = HashSet::new();
@@ -107,27 +165,41 @@ fn main() {
     let start = start.unwrap();
     let end = end.unwrap();
 
-    const INV: i64 = -100;
-    let default_path = fastest_path(&maze, &start, &end, (Point(INV, INV), Point(INV, INV)));
+    let default_path = fastest_path(&maze, &start, &end, usize::MAX).unwrap().0;
     dbg!(default_path);
 
     let candidates = walls
         .iter()
         .flat_map(|p| MOVES.iter().map(|m| (*p, *p + *m)))
-        .filter(|x| maze.contains(&x.1) || walls.contains(&x.1))
+        .filter(|p| maze.contains(&p.1))
         .collect_vec();
 
+    dbg!(candidates.len());
     let mut histogram: HashMap<usize, usize> = HashMap::new();
+    let mut total = 0;
 
-    for hack in candidates {
-        let cheat = fastest_path(&maze, &start, &end, hack);
-        if cheat < default_path {
-            let diff = default_path - cheat;
-            *histogram.entry(diff).or_default() += 1;
+    for (i, hack) in candidates.iter().enumerate() {
+        let mut cloned_maze = maze.clone();
+        cloned_maze.insert(hack.0);
+        if let Some((steps, path)) = fastest_path(&cloned_maze, &start, &end, default_path) {
+            if let Some(idx) = path.iter().position(|x| x == &hack.0) {
+                if path.get(idx + 1) == Some(&hack.1) {
+                    let diff = default_path - steps;
+                    *histogram.entry(diff).or_default() += 1;
+                    if diff >= 100 {
+                        total += 1;
+                    }
+                    //if diff == 18 {
+                    //print_map(&maze, width, height, &start, &end, &path, &hack);
+                    //}
+                }
+            }
         }
     }
 
-    for (k, v) in histogram.iter().sorted_by_key(|x| x.0) {
-        println!("{k}:{v}");
-    }
+    //for (k, v) in histogram.iter().sorted_by_key(|x| x.0) {
+    //println!("{k}:{v}");
+    //}
+
+    dbg!(total);
 }
