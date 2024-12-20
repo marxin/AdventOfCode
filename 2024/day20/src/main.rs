@@ -55,9 +55,16 @@ fn fastest_path(map: &HashSet<Point>, start: &Point, end: &Point, hacks: (Point,
     while let Some((pos, steps)) = todo.pop_front() {
         for m in MOVES.iter() {
             let next = pos + *m;
-            if map.contains(&next) && !visited.contains_key(&next) {
-                visited.insert(next, steps + 1);
-                todo.push_back((next, steps + 1));
+            if !visited.contains_key(&next) {
+                if map.contains(&next) {
+                    visited.insert(next, steps + 1);
+                    todo.push_back((next, steps + 1));
+                } else if next == hacks.0 {
+                    visited.insert(hacks.0, steps + 1);
+                    todo.push_back((hacks.0, steps + 1));
+                    visited.insert(hacks.1, steps + 2);
+                    todo.push_back((hacks.1, steps + 2));
+                }
             }
         }
     }
@@ -107,15 +114,15 @@ fn main() {
     let candidates = walls
         .iter()
         .flat_map(|p| MOVES.iter().map(|m| (*p, *p + *m)))
+        .filter(|x| maze.contains(&x.1) || walls.contains(&x.1))
         .collect_vec();
 
     let mut histogram: HashMap<usize, usize> = HashMap::new();
 
     for hack in candidates {
-        let mut maze = maze.clone();
         let cheat = fastest_path(&maze, &start, &end, hack);
-        let diff = default_path - cheat;
-        if diff > 0 {
+        if cheat < default_path {
+            let diff = default_path - cheat;
             *histogram.entry(diff).or_default() += 1;
         }
     }
