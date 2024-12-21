@@ -1,10 +1,12 @@
-use std::ops::{Add, Mul, Sub};
 #[allow(unused)]
 use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs};
+use std::{
+    iter,
+    ops::{Add, Mul, Sub},
+};
 
 #[allow(unused)]
 use itertools::Itertools;
-use itertools::Position;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
 struct Point(i64, i64);
@@ -97,7 +99,7 @@ const KEYBOARD2: &str = "
 <v>
 ";
 
-fn best_path(
+fn stortest_path(
     known: &HashSet<Point>,
     pos: Point,
     end: Point,
@@ -131,14 +133,14 @@ fn best_path(
             let next = pos + *m;
             if known.contains(&next) {
                 path.push(next);
-                best_path(known, next, end, steps + 1, path, paths);
+                stortest_path(known, next, end, steps + 1, path, paths);
                 path.pop();
             }
         }
     }
 }
 
-fn find_shortest_paths(map: &str) -> HashMap<(char, char), Vec<Vec<Point>>> {
+fn find_all_shortest_paths(map: &str) -> HashMap<(char, char), Vec<Vec<char>>> {
     let mut positions = HashMap::new();
     for (y, line) in map.trim().lines().enumerate() {
         for (x, c) in line.chars().enumerate() {
@@ -152,15 +154,15 @@ fn find_shortest_paths(map: &str) -> HashMap<(char, char), Vec<Vec<Point>>> {
         .keys()
         .cartesian_product(positions.keys())
         .filter_map(|(start_c, end_c)| {
-            if start_c == end_c {
-                return None;
-            }
+            //if start_c == end_c {
+            //return None;
+            //}
 
             let start = positions[start_c];
             let end = positions[end_c];
 
             let mut paths = Vec::new();
-            best_path(
+            stortest_path(
                 &positions.values().copied().collect::<HashSet<Point>>(),
                 start,
                 end,
@@ -168,14 +170,85 @@ fn find_shortest_paths(map: &str) -> HashMap<(char, char), Vec<Vec<Point>>> {
                 &mut Vec::new(),
                 &mut paths,
             );
+            let paths = paths
+                .into_iter()
+                .map(|mut path| {
+                    path.insert(0, start);
+                    path.push(end);
+                    let path = path
+                        .iter()
+                        .tuple_windows()
+                        .map(|(s, e)| *e - *s)
+                        .collect_vec();
+                    map_to_arrows(&path)
+                })
+                .collect_vec();
+
             Some(((*start_c, *end_c), paths))
         })
         .collect()
+}
+
+fn find_code(
+    code: &str,
+    paths_a: &HashMap<(char, char), Vec<Vec<char>>>,
+    paths_b: &HashMap<(char, char), Vec<Vec<char>>>,
+) -> usize {
+    let mut total = 0;
+    for (s, e) in iter::once('A').chain(code.chars()).tuple_windows() {
+        total += paths_a[&(s, e)]
+            .iter()
+            .map(|path| steps(path, &paths_b, 2))
+            .min()
+            .unwrap();
+    }
+    total
 }
 
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let lines = content.lines().collect_vec();
 
-    dbg!(find_shortest_paths(KEYBOARD1));
+    let paths_a = find_all_shortest_paths(KEYBOARD1);
+    let paths_b = find_all_shortest_paths(KEYBOARD2);
+
+    let mut total = 0;
+    for code in lines {
+        let digits = String::from_iter(code.chars().filter(|x| x.is_digit(10)));
+        let best = find_code(code, &paths_a, &paths_b);
+        total += digits.parse::<usize>().unwrap() * best;
+    }
+    dbg!(total);
+}
+
+fn map_to_arrows(path: &[Point]) -> Vec<char> {
+    path.iter()
+        .map(|p| match p {
+            Point(1, 0) => '>',
+            Point(0, 1) => 'v',
+            Point(-1, 0) => '<',
+            Point(0, -1) => '^',
+            Point(0, 0) => 'A',
+            _ => panic!(),
+        })
+        .collect_vec()
+}
+
+fn steps(path: &[char], paths_b: &HashMap<(char, char), Vec<Vec<char>>>, level: i32) -> usize {
+    //dbg!(String::from_iter(path));
+    //dbg!(level);
+    if level == 0 {
+        return path.len();
+    }
+
+    let mut total = 0;
+    for (s, e) in iter::once(&'A').chain(path.iter()).tuple_windows() {
+        total += paths_b[&(*s, *e)]
+            .iter()
+            .map(|path| steps(path, &paths_b, level - 1))
+            .min()
+            .unwrap();
+    }
+
+    total
 }
