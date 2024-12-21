@@ -205,19 +205,80 @@ fn find_code(
     total
 }
 
+const LEVELS: usize = 25 - 1;
+
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let lines = content.lines().collect_vec();
 
     let paths_a = find_all_shortest_paths(KEYBOARD1);
     let paths_b = find_all_shortest_paths(KEYBOARD2);
+    let all_combs = paths_b.keys().collect_vec();
+
+    let mut prices: HashMap<(char, char, usize), usize> =
+        HashMap::from_iter(all_combs.iter().map(|(s, e)| {
+            (
+                (*s, *e, 0),
+                paths_b[&(*s, *e)].iter().map(|p| p.len()).min().unwrap(),
+            )
+        }));
+
+    assert_eq!(prices[&('A', 'A', 0)], 1);
+    assert_eq!(prices[&('A', '<', 0)], 4);
+    assert_eq!(prices[&('<', 'A', 0)], 4);
+    assert_eq!(prices[&('>', 'A', 0)], 2);
+    //dbg!(&prices);
+
+    for level in 1..=LEVELS {
+        for (s, e) in all_combs.iter() {
+            //dbg!(s, e);
+            let mut best = Vec::new();
+            for path in paths_b[&(*s, *e)].iter() {
+                //dbg!(level, String::from_iter(path));
+                let price = iter::once(&'A')
+                    .chain(path.iter())
+                    .tuple_windows()
+                    .map(|(s2, e2)| prices[&(*s2, *e2, level - 1)])
+                    .sum::<usize>();
+                best.push(price);
+            }
+            prices.insert((*s, *e, level), *best.iter().min().unwrap());
+        }
+    }
+    dbg!(prices.len());
+    println!();
+    println!();
 
     let mut total = 0;
+    //#[allow(clippy::never_loop)]
     for code in lines {
         let digits = String::from_iter(code.chars().filter(|x| x.is_digit(10)));
-        let best = find_code(code, &paths_a, &paths_b);
+        let best = {
+            let mut total = 0;
+            for (s, e) in iter::once('A').chain(code.chars()).tuple_windows() {
+                //dbg!(s, e);
+                let v = paths_a[&(s, e)]
+                    .iter()
+                    .map(|path| {
+                        //dbg!(String::from_iter(path));
+                        iter::once(&'A')
+                            .chain(path.iter())
+                            .tuple_windows()
+                            .map(|(ss, ee)| prices[&(*ss, *ee, LEVELS)])
+                            .sum::<usize>()
+                    })
+                    .min()
+                    .unwrap();
+                total += v;
+            }
+            total
+        };
+
+        let best2 = find_code(code, &paths_a, &paths_b);
+        dbg!(&digits, &best, best2);
         total += digits.parse::<usize>().unwrap() * best;
     }
+    println!();
     dbg!(total);
 }
 
@@ -235,19 +296,25 @@ fn map_to_arrows(path: &[Point]) -> Vec<char> {
 }
 
 fn steps(path: &[char], paths_b: &HashMap<(char, char), Vec<Vec<char>>>, level: i32) -> usize {
-    //dbg!(String::from_iter(path));
+    //dbg!(level, String::from_iter(path));
     //dbg!(level);
     if level == 0 {
         return path.len();
     }
 
-    let mut total = 0;
+    let mut histogram: HashMap<(&char, &char), usize> = HashMap::new();
     for (s, e) in iter::once(&'A').chain(path.iter()).tuple_windows() {
-        total += paths_b[&(*s, *e)]
-            .iter()
-            .map(|path| steps(path, &paths_b, level - 1))
-            .min()
-            .unwrap();
+        *histogram.entry((s, e)).or_default() += 1;
+    }
+
+    let mut total = 0;
+    for ((s, e), times) in histogram {
+        total += times
+            * paths_b[&(*s, *e)]
+                .iter()
+                .map(|path| steps(path, &paths_b, level - 1))
+                .min()
+                .unwrap();
     }
 
     total
