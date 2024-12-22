@@ -1,4 +1,7 @@
-use std::ops::{Add, Mul, Sub};
+use std::{
+    cmp::Reverse,
+    ops::{Add, Mul, Sub},
+};
 #[allow(unused)]
 use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs};
 
@@ -86,6 +89,46 @@ fn flood_fill<T: Clone, F: Fn(&Point, &T, &Point, &T) -> bool>(
 
 const MODULO: u64 = 16777216;
 
+fn generate_diffs(mut n: u64) -> (Vec<u64>, Vec<i64>) {
+    let mut values = vec![n % 10];
+    let next = |mut n: u64| {
+        n ^= n * 64;
+        n %= MODULO;
+        n ^= n / 32;
+        n %= MODULO;
+        n ^= n * 2048;
+        n %= MODULO;
+        n
+    };
+
+    for _ in 0..2000 {
+        n = next(n);
+        values.push(n % 10);
+    }
+
+    let diffs = values
+        .iter()
+        .tuple_windows()
+        .map(|(x, y)| *y as i64 - *x as i64)
+        .collect_vec();
+    (values, diffs)
+}
+
+fn build_table(n: u64) -> HashMap<Vec<i64>, u64> {
+    let (values, diffs) = generate_diffs(n);
+    let mut map = HashMap::new();
+
+    for i in 0..diffs.len() {
+        let window = diffs.iter().skip(i).take(4).copied().collect_vec();
+        if window.len() < 4 {
+            break;
+        }
+        map.entry(window).or_insert(values[i + 4]);
+    }
+
+    map
+}
+
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let numbers = content
@@ -93,19 +136,19 @@ fn main() {
         .map(|line| line.parse::<u64>().unwrap())
         .collect_vec();
 
-    let next = |mut n: u64| {
-        n ^= n * 64;
-        n %= MODULO;
-        n ^= (n / 32);
-        n %= MODULO;
-        n ^= (n * 2048);
-        n %= MODULO;
-        n
-    };
+    let tables = numbers.iter().map(|n| build_table(*n)).collect_vec();
+    let candidates = tables.iter().flat_map(|t| t.keys()).unique().collect_vec();
+    dbg!(candidates.len());
 
-    let calculate = |n| (0..2000).fold(n, |acc, _| next(acc));
+    let best = candidates
+        .iter()
+        .map(|&c| {
+            tables
+                .iter()
+                .map(|t| t.get(c).map_or(0, |v| *v))
+                .sum::<u64>()
+        })
+        .max();
 
-    let number = 123;
-    let result = numbers.iter().map(|n| calculate(*n)).collect_vec();
-    dbg!(result.iter().sum::<u64>());
+    dbg!(best);
 }
