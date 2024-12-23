@@ -2,7 +2,6 @@ use std::ops::{Add, Mul, Sub};
 #[allow(unused)]
 use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs};
 
-use itertools::Group;
 #[allow(unused)]
 use itertools::Itertools;
 
@@ -118,7 +117,7 @@ fn main() {
         dbg!(n, candidates.len());
         if candidates.len() == 1 {
             dbg!(&candidates);
-            dbg!(candidates.iter().next().unwrap().into_iter().join(","));
+            dbg!(candidates.first().unwrap().iter().join(","));
             break;
         }
     }
