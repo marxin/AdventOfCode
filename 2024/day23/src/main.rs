@@ -2,6 +2,7 @@ use std::ops::{Add, Mul, Sub};
 #[allow(unused)]
 use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs};
 
+use itertools::Group;
 #[allow(unused)]
 use itertools::Itertools;
 
@@ -98,23 +99,27 @@ fn main() {
         vertices.insert(dst);
     }
 
-    const NEEDLE: &str = "t";
-    let mut total = 0;
     let vertices = vertices.iter().collect_vec();
-    for (v1, (v2, v3)) in vertices
-        .iter()
-        .cartesian_product(vertices.iter().cartesian_product(vertices.iter()))
-    {
-        if v1 != v2 && v2 != v3 {
-            if graph.contains(&(v1, v2))
-                && graph.contains(&(v2, v3))
-                && graph.contains(&(v1, v3))
-                && (v1.starts_with(NEEDLE) || v2.starts_with(NEEDLE) || v3.starts_with(NEEDLE))
-            {
-                total += 1;
+    let mut candidates = vertices.iter().map(|v| vec![v]).collect_vec();
+
+    for n in 0..30 {
+        let mut next_group = HashSet::new();
+        for g in candidates.iter() {
+            for v in vertices.iter().filter(|v| !g.contains(v)) {
+                if g.iter().all(|x| graph.contains(&(**x, **v))) {
+                    let mut next = g.clone();
+                    next.push(v);
+                    next.sort();
+                    next_group.insert(next);
+                }
             }
         }
+        candidates = next_group.into_iter().collect_vec();
+        dbg!(n, candidates.len());
+        if candidates.len() == 1 {
+            dbg!(&candidates);
+            dbg!(candidates.iter().next().unwrap().into_iter().join(","));
+            break;
+        }
     }
-
-    dbg!(total / 6);
 }
