@@ -115,9 +115,8 @@ fn main() {
         }
         candidates = next_group.into_iter().collect_vec();
         dbg!(n, candidates.len());
-        if candidates.len() == 1 {
-            dbg!(&candidates);
-            dbg!(candidates.first().unwrap().iter().join(","));
+        if let Ok(candidate) = candidates.iter().exactly_one() {
+            dbg!(candidate.iter().join(","));
             break;
         }
     }
