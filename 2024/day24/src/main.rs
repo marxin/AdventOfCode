@@ -198,4 +198,11 @@ fn main() {
 
     dbg!(value(&known, "y") + value(&known, "x"));
     dbg!(compute(gates, known));
+
+    dbg!(
+        ["vcg", "z24", "rvc", "rrs", "rkf", "z9", "jgb", "z20"]
+            .iter()
+            .sorted()
+            .join(",")
+    );
 }
