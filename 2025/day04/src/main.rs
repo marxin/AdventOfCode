@@ -99,17 +99,29 @@ fn main() {
         }
     }
 
-    let count = points
-        .iter()
-        .filter(|p| {
-            MOVES_WITH_DIAGONAL
-                .map(|m| m + **p)
-                .iter()
-                .filter(|x| points.contains(x))
-                .count()
-                < 4
-        })
-        .count();
+    let mut total = 0;
+    loop {
+        let removable = points
+            .iter()
+            .filter(|p| {
+                MOVES_WITH_DIAGONAL
+                    .map(|m| m + **p)
+                    .iter()
+                    .filter(|x| points.contains(x))
+                    .count()
+                    < 4
+            })
+            .copied()
+            .collect_vec();
+        total += removable.len();
 
-    println!("{count}");
+        if removable.is_empty() {
+            break;
+        }
+        for r in removable {
+            points.remove(&r);
+        }
+    }
+
+    println!("{total}");
 }
