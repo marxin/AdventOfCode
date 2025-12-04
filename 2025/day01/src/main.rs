@@ -87,10 +87,7 @@ fn flood_fill<T: Clone, F: Fn(&Point, &T, &Point, &T) -> bool>(
 
 const MODULO: i32 = 100;
 
-fn main() {
-    let content = fs::read_to_string("input.txt").unwrap();
-    let lines = content.lines().collect_vec();
-
+fn count_zeros(lines: Vec<&str>) -> i32 {
     let mut pos = 50;
     let mut times = 0;
 
@@ -98,11 +95,27 @@ fn main() {
         let mut shift = if line.starts_with('L') { -1 } else { 1 };
         shift *= line[1..].parse::<i32>().unwrap();
 
-        pos = (pos + shift) % MODULO;
-        if pos == 0 {
-            times += 1;
+        times += (shift / MODULO).abs();
+        // dbg!((pos, shift, times));
+        shift %= MODULO;
+
+        if shift != 0 {
+            let prev = pos;
+            pos += shift;
+            if prev != 0 && (pos <= 0 || pos >= MODULO) {
+                times += 1;
+            }
+            pos = (pos + MODULO) % MODULO;
+            assert!((0..MODULO).contains(&pos));
         }
     }
 
-    println!("times = {times}");
+    times
+}
+
+fn main() {
+    let content = fs::read_to_string("input.txt").unwrap();
+    let lines = content.lines().collect_vec();
+
+    println!("times = {}", count_zeros(lines));
 }
