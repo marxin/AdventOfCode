@@ -85,30 +85,42 @@ fn flood_fill<T: Clone, F: Fn(&Point, &T, &Point, &T) -> bool>(
     groups
 }
 
+fn find_best(values: &[u64], total: u64, remaining: usize) -> u64 {
+    if remaining == 0 {
+        return total;
+    }
+
+    for digit in (0..=9).rev() {
+        let positions = values
+            .iter()
+            .positions(|&d| d == digit)
+            .filter(|&pos| values.len() - pos >= remaining)
+            .collect_vec();
+        if !positions.is_empty() {
+            return positions
+                .iter()
+                .map(|&p| find_best(&values[p + 1..], 10 * total + values[p], remaining - 1))
+                .max()
+                .unwrap();
+        }
+    }
+
+    unreachable!("must find a digit");
+}
+
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let lines = content.lines().collect_vec();
-    let mut sum = 0;
+    let mut total = 0;
 
     for line in lines {
         let digits = line
             .chars()
-            .map(|d| d.to_string().parse::<u32>().unwrap())
+            .map(|d| d.to_string().parse::<u64>().unwrap())
             .collect_vec();
 
-        let maximum = (0..digits.len())
-            .cartesian_product(0..digits.len())
-            .filter_map(|(one, two)| {
-                if one < two {
-                    Some(10 * digits[one] + digits[two])
-                } else {
-                    None
-                }
-            })
-            .max()
-            .unwrap();
-        sum += maximum;
+        total += find_best(&digits, 0, 12);
     }
 
-    println!("{sum}");
+    println!("{total}");
 }
