@@ -85,15 +85,24 @@ fn flood_fill<T: Clone, F: Fn(&Point, &T, &Point, &T) -> bool>(
     groups
 }
 
+const MODULO: i32 = 100;
+
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let lines = content.lines().collect_vec();
 
-    let _width = lines.first().unwrap().len() as i64;
-    let _height = lines.len() as i64;
+    let mut pos = 50;
+    let mut times = 0;
 
-    #[allow(unused)]
-    for (y, line) in lines.iter().enumerate() {
-        println!("{line}")
+    for line in lines {
+        let mut shift = if line.starts_with('L') { -1 } else { 1 };
+        shift *= line[1..].parse::<i32>().unwrap();
+
+        pos = (pos + shift) % MODULO;
+        if pos == 0 {
+            times += 1;
+        }
     }
+
+    println!("times = {times}");
 }
