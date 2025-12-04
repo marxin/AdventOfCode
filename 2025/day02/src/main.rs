@@ -85,6 +85,19 @@ fn flood_fill<T: Clone, F: Fn(&Point, &T, &Point, &T) -> bool>(
     groups
 }
 
+fn is_invalid(number: i64) -> bool {
+    let s = number.to_string();
+    let len = s.len();
+    let chars = s.chars().collect_vec();
+
+    for i in 1..len {
+        if len % i == 0 && chars.chunks_exact(i).unique().exactly_one().is_ok() {
+            return true;
+        }
+    }
+    false
+}
+
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let line = content.lines().collect_vec()[0];
@@ -100,9 +113,7 @@ fn main() {
     let mut sum = 0;
     for range in ranges {
         for i in range {
-            let s = i.to_string();
-            let l = s.len();
-            if s.len() % 2 == 0 && s[0..l / 2] == s[l / 2..] {
+            if is_invalid(i) {
                 sum += i;
             }
         }
