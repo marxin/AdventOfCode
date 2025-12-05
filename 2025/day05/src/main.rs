@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul, RangeInclusive, Sub};
+use std::ops::{Add, Mul, Range, RangeInclusive, Sub};
 #[allow(unused)]
 use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs};
 
@@ -85,22 +85,46 @@ fn flood_fill<T: Clone, F: Fn(&Point, &T, &Point, &T) -> bool>(
     groups
 }
 
+fn split_range(range: Range<i64>, splitpoints: &Vec<i64>) -> Vec<Range<i64>> {
+    let mut pos = range.start;
+    let end = range.end;
+    let mut results = Vec::new();
+
+    while pos != end {
+        let candidate = *splitpoints.iter().find(|&&x| x > pos).unwrap();
+        results.push(pos..candidate);
+        pos = candidate;
+    }
+
+    results
+}
+
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
-    let (ranges, ids) = content.split_once("\n\n").unwrap();
+    let (ranges, _ids) = content.split_once("\n\n").unwrap();
 
     let ranges = ranges
         .lines()
-        .map(|part: &str| -> RangeInclusive<i64> {
+        .map(|part: &str| -> Range<i64> {
             let (s, e) = part.split_once('-').unwrap();
-            s.parse().unwrap()..=e.parse().unwrap()
+            s.parse().unwrap()..(e.parse::<i64>().unwrap() + 1)
         })
         .collect_vec();
-    let numbers = ids.lines().map(|l| l.parse::<i64>().unwrap()).collect_vec();
 
-    let count = numbers
+    let splitpoints: HashSet<_> = ranges
         .iter()
-        .filter(|n| ranges.iter().any(|r| r.contains(n)))
-        .count();
+        .map(|x| x.start)
+        .chain(ranges.iter().map(|x| x.end))
+        .collect();
+    let splitpoints = splitpoints.into_iter().sorted().collect_vec();
+
+    let mut new_ranges = HashSet::new();
+    for r in ranges {
+        for sr in split_range(r, &splitpoints) {
+            new_ranges.insert(sr);
+        }
+    }
+
+    let count = new_ranges.into_iter().map(|r| r.count()).sum::<usize>();
     println!("{count}");
 }
