@@ -87,37 +87,41 @@ fn flood_fill<T: Clone, F: Fn(&Point, &T, &Point, &T) -> bool>(
 
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
-    let mut lines = content
-        .lines()
-        .map(|line| line.split_whitespace().collect_vec())
-        .collect_vec();
-    let operations = lines
-        .last()
-        .unwrap()
-        .iter()
-        .map(|&op| {
-            if op == "+" {
-                |x: i64, y: i64| x + y
-            } else {
-                |x, y| x * y
-            }
-        })
-        .collect_vec();
-    lines.pop();
-    let lines = lines
-        .iter()
-        .map(|line| line.iter().map(|x| x.parse::<i64>().unwrap()).collect_vec())
-        .collect_vec();
-    let columns = lines.first().unwrap().len();
+    let mut lines = content.lines().collect_vec();
 
     let mut s = 0;
-    for c in 0..columns {
-        let value = lines
-            .iter()
-            .map(|line| line[c])
-            .reduce(operations[c])
-            .unwrap();
-        s += value;
+
+    while !lines[0].is_empty() {
+        for p in 0.. {
+            // Excepted an input that always ends with a space!
+            if lines.iter().all(|line| line.chars().nth(p).unwrap() == ' ') {
+                let mut chunk = lines.iter().map(|&l| &l[..p]).collect_vec();
+                let op = chunk.last().unwrap().trim();
+                assert_eq!(op.len(), 1);
+
+                let op = if op == "+" {
+                    |x: i64, y: i64| x + y
+                } else {
+                    |x, y| x * y
+                };
+                chunk.pop();
+                let columns = chunk.first().unwrap().len();
+                let mut values = Vec::new();
+                for c in 0..columns {
+                    let digits = chunk
+                        .iter()
+                        .map(|line| line.chars().nth(c).unwrap())
+                        .join("");
+                    let digits = digits.trim();
+                    values.push(digits.parse::<i64>().unwrap());
+                }
+
+                s += values.into_iter().reduce(op).unwrap();
+
+                lines = lines.into_iter().map(|line| &line[p + 1..]).collect_vec();
+                break;
+            }
+        }
     }
 
     println!("{s}");
