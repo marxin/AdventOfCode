@@ -1,9 +1,6 @@
+use std::ops::{Add, Mul, Sub};
 #[allow(unused)]
 use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs};
-use std::{
-    collections::vec_deque,
-    ops::{Add, Mul, Sub},
-};
 
 #[allow(unused)]
 use itertools::Itertools;
