@@ -1,6 +1,9 @@
-use std::ops::{Add, Sub};
 #[allow(unused)]
 use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs};
+use std::{
+    hash::Hash,
+    ops::{Add, Sub},
+};
 
 #[allow(unused)]
 use itertools::Itertools;
@@ -33,6 +36,25 @@ fn dist(a: &Point, b: &Point) -> f32 {
     (dy * dy + dz2).sqrt()
 }
 
+fn is_one_component(points: &Vec<Point>, edges: &HashMap<Point, Vec<Point>>) -> bool {
+    let mut worklist = vec![points[0]];
+    let mut seen = HashSet::new();
+
+    while let Some(item) = worklist.pop() {
+        if seen.contains(&item) {
+            continue;
+        }
+        seen.insert(item);
+        if let Some(neighbors) = edges.get(&item) {
+            for n in neighbors {
+                worklist.push(*n);
+            }
+        }
+    }
+
+    seen.len() == points.len()
+}
+
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let points = content
@@ -56,7 +78,7 @@ fn main() {
     let distances = distances.chunks(2).map(|chunk| chunk[0]).collect_vec();
 
     let mut edges = HashMap::new();
-    for (_, (&p1, &p2)) in distances.iter().take(1000).copied() {
+    for (_, (&p1, &p2)) in distances.iter().copied() {
         edges
             .entry(p1)
             .and_modify(|v: &mut Vec<Point>| v.push(p2))
@@ -65,35 +87,10 @@ fn main() {
             .entry(p2)
             .and_modify(|v: &mut Vec<Point>| v.push(p1))
             .or_insert_with(|| vec![p1]);
-    }
 
-    let mut seen: HashSet<Point> = HashSet::new();
-    let mut sizes = Vec::new();
-    for p in points {
-        if seen.contains(&p) {
-            continue;
-        }
-        let mut size = 0;
-        let mut worklist = vec![p];
-        while let Some(item) = worklist.pop() {
-            if seen.contains(&item) {
-                continue;
-            }
-            seen.insert(item);
-            size += 1;
-            if let Some(neighbors) = edges.get(&item) {
-                for n in neighbors {
-                    worklist.push(*n);
-                }
-            }
-        }
-
-        if size > 1 {
-            sizes.push(size);
+        if is_one_component(&points, &edges) {
+            println!("{}", p1.0 * p2.0);
+            break;
         }
     }
-
-    sizes.sort();
-    let best_3 = sizes.iter().rev().take(3).collect_vec();
-    println!("{}", best_3[0] * best_3[1] * best_3[2]);
 }
