@@ -1,6 +1,9 @@
-use std::ops::{Add, Mul, Sub};
 #[allow(unused)]
 use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs};
+use std::{
+    collections::vec_deque,
+    ops::{Add, Mul, Sub},
+};
 
 #[allow(unused)]
 use itertools::Itertools;
@@ -88,9 +91,10 @@ fn flood_fill<T: Clone, F: Fn(&Point, &T, &Point, &T) -> bool>(
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let lines = content.lines().collect_vec();
+    let width = lines[0].len();
+    let height = lines.len();
 
-    let mut start = None;
-    let mut splitters = HashSet::new();
+    let mut splitters = HashMap::new();
     let mut playground = HashSet::new();
 
     for (y, line) in lines.iter().enumerate() {
@@ -99,36 +103,59 @@ fn main() {
             match c {
                 'S' => {
                     playground.insert(pos);
-                    start = Some(pos);
+                    splitters.insert(pos, 0);
                 }
                 '.' => {
                     playground.insert(pos);
                 }
                 '^' => {
-                    splitters.insert(pos);
+                    splitters.insert(pos, 0);
                 }
                 _ => unreachable!(),
             }
         }
     }
 
-    let mut splitted = 0;
-    let mut worklist = vec![start.unwrap()];
-    while let Some(pos) = worklist.pop() {
-        if !playground.remove(&pos) {
-            continue;
+    let mut total = 0;
+    let mut worklist = (0..width)
+        .map(|x| (Point(x as _, height as _), 1u64))
+        .collect_vec();
+
+    for y in (0..(height - 1)).rev() {
+        // push particles up and then fill up newly the worklist
+        while let Some((pos, times)) = worklist.pop() {
+            let left = Point(pos.0 - 1, pos.1);
+            splitters.entry(left).and_modify(|v| {
+                *v += times;
+            });
+
+            let right = Point(pos.0 + 1, pos.1);
+            splitters.entry(right).and_modify(|v| {
+                *v += times;
+            });
+
+            let pos2 = Point(pos.0, pos.1 - 1);
+            if pos2.1 < 0 {
+                continue;
+            }
+
+            if splitters.contains_key(&pos2) {
+                if pos2.1 == 0 {
+                    // Start -> accumulate
+                    total += times;
+                }
+                // end of the particle
+            } else if playground.contains(&pos2) {
+                worklist.push((pos2, times));
+            }
         }
-        let pos2 = Point(pos.0, pos.1 + 1);
-        if splitters.contains(&pos2) {
-            let p1 = Point(pos2.0 - 1, pos2.1 + 1);
-            worklist.push(p1);
-            let p2 = Point(pos2.0 + 1, pos2.1 + 1);
-            worklist.push(p2);
-            splitted += 1;
-        } else if playground.contains(&pos2) {
-            worklist.push(pos2);
+
+        for x in 0..width {
+            let p = Point(x as _, y as _);
+            if let Some(times) = splitters.get(&p) {
+                worklist.push((p, *times));
+            }
         }
     }
-
-    println!("{splitted}");
+    println!("{total}");
 }
