@@ -1,6 +1,9 @@
-use std::ops::{Add, Mul, Sub};
 #[allow(unused)]
 use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs};
+use std::{
+    mem::swap,
+    ops::{Add, Mul, Sub},
+};
 
 #[allow(unused)]
 use itertools::Itertools;
@@ -35,54 +38,27 @@ impl Mul<i64> for Point {
 #[allow(dead_code)]
 const MOVES: [Point; 4] = [Point(0, 1), Point(1, 0), Point(0, -1), Point(-1, 0)];
 
-#[allow(dead_code)]
-const MOVES_WITH_DIAGONAL: [Point; 8] = [
-    Point(0, 1),
-    Point(1, 0),
-    Point(0, -1),
-    Point(-1, 0),
-    Point(1, 1),
-    Point(1, -1),
-    Point(-1, 1),
-    Point(-1, -1),
-];
-
-#[allow(dead_code)]
-fn flood_fill<T: Clone, F: Fn(&Point, &T, &Point, &T) -> bool>(
-    map: &HashMap<Point, T>,
-    directions: &[Point],
-    predicate: F,
-) -> Vec<HashSet<Point>> {
-    let mut groups = Vec::new();
-    let mut visited = HashSet::new();
-
-    for (point, c) in map.iter() {
-        if visited.contains(point) {
-            continue;
-        }
-        visited.insert(*point);
-
-        let mut group = HashSet::from([*point]);
-        let mut queue = VecDeque::from([*point]);
-
-        while let Some(p) = queue.pop_front() {
-            for m in directions.iter() {
-                let next = p + *m;
-                if let Some(v) = map.get(&next)
-                    && predicate(&p, c, &next, v)
-                    && !visited.contains(&next)
-                {
-                    queue.push_back(next);
-                    group.insert(next);
-                    visited.insert(next);
-                }
+fn rectangle_size(
+    points: &HashSet<Point>,
+    xvalues: &Vec<i64>,
+    yvalues: &Vec<i64>,
+    minx: i64,
+    maxx: i64,
+    miny: i64,
+    maxy: i64,
+) -> Option<i64> {
+    for x in minx..=maxx {
+        for y in miny..=maxy {
+            let p = Point(x, y);
+            if !points.contains(&p) {
+                return None;
             }
         }
-
-        groups.push(group);
     }
 
-    groups
+    let x = xvalues[maxx as usize + 1] - xvalues[minx as usize];
+    let y = yvalues[maxy as usize + 1] - yvalues[miny as usize];
+    Some(x * y)
 }
 
 fn main() {
@@ -92,18 +68,152 @@ fn main() {
         .iter()
         .map(|l| {
             let parts = l.split_once(',').unwrap();
-            (
+            Point(
                 parts.0.parse::<i64>().unwrap(),
                 parts.1.parse::<i64>().unwrap(),
             )
         })
         .collect_vec();
 
-    let best = points
+    let mut xvalues = HashSet::new();
+    let mut yvalues = HashSet::new();
+
+    let lines: Vec<(_, _)> = points
         .iter()
-        .cartesian_product(points.iter())
-        .map(|(a, b)| ((a.0 - b.0).abs() + 1) * ((a.1 - b.1).abs() + 1))
-        .max()
-        .unwrap();
-    println!("{best}");
+        .copied()
+        .chain([points[0]])
+        .tuple_windows()
+        .collect_vec();
+
+    for (start, end) in lines.iter() {
+        if start.0 == end.0 {
+            let (start, end) = if start.1 < end.1 {
+                (start, end)
+            } else {
+                (end, start)
+            };
+            // vertical line from lower Y to higher
+            yvalues.insert(start.1);
+            yvalues.insert(start.1 + 1);
+            yvalues.insert(end.1);
+            yvalues.insert(end.1 + 1);
+        } else if start.1 == end.1 {
+            let (start, end) = if start.0 < end.0 {
+                (start, end)
+            } else {
+                (end, start)
+            };
+            // horizontal line from lower X to higher
+            xvalues.insert(start.0);
+            xvalues.insert(start.0 + 1);
+            xvalues.insert(end.0);
+            xvalues.insert(end.0 + 1);
+        } else {
+            unreachable!("wrong lines")
+        }
+    }
+
+    let xvalues = xvalues.into_iter().sorted().collect_vec();
+    let yvalues = yvalues.into_iter().sorted().collect_vec();
+    dbg!(&xvalues);
+    dbg!(&yvalues);
+
+    let mut points = HashSet::new();
+
+    let mut corners = Vec::new();
+
+    for (start, end) in lines.iter() {
+        if start.0 == end.0 {
+            let (start, end) = if start.1 < end.1 {
+                (start, end)
+            } else {
+                (end, start)
+            };
+
+            // vertical line from lower Y to higher
+            let xindex = xvalues.iter().position(|&x| x == start.0).unwrap();
+            let mut it = yvalues.iter().skip_while(|&&y| y != start.1);
+            let mut s = start.1;
+            loop {
+                let e = *it.next().unwrap();
+                let index = yvalues.iter().position(|&y| y == s).unwrap();
+                points.insert(Point(xindex as i64, index as i64));
+                if s == end.1 {
+                    break;
+                }
+                s = e;
+            }
+        } else if start.1 == end.1 {
+            let (start, end) = if start.0 < end.0 {
+                (start, end)
+            } else {
+                (end, start)
+            };
+
+            // horizontal line from lower X to higher
+            let yindex = yvalues.iter().position(|&y| y == start.1).unwrap();
+            let mut it = xvalues.iter().skip_while(|&&x| x != start.0);
+            let mut s = start.0;
+            loop {
+                let e = *it.next().unwrap();
+                let index = xvalues.iter().position(|&x| x == s).unwrap();
+                points.insert(Point(index as i64, yindex as i64));
+                if s == end.0 {
+                    break;
+                }
+                s = e;
+            }
+        } else {
+            unreachable!("wrong lines")
+        }
+
+        let x = xvalues.iter().position(|&x| x == start.0).unwrap() as i64;
+        let y = yvalues.iter().position(|&y| y == start.1).unwrap() as i64;
+        corners.push(Point(x, y));
+    }
+
+    dbg!(xvalues.len());
+    dbg!(yvalues.len());
+
+    // let s = Point(2, 2);
+    let s = Point(250, 400);
+    let mut worklist = vec![s];
+
+    while let Some(pos) = worklist.pop() {
+        for m in MOVES.iter() {
+            let pos2 = pos + *m;
+            if !points.contains(&pos2) {
+                points.insert(pos2);
+                worklist.push(pos2);
+            }
+        }
+    }
+
+    for y in 0..yvalues.len() as i64 {
+        for x in 0..xvalues.len() as i64 {
+            let p = Point(x, y);
+            if corners.contains(&p) {
+                print!("X");
+            } else if points.contains(&p) {
+                print!("#");
+            } else {
+                print!(".");
+            }
+        }
+        println!()
+    }
+
+    let mut best = 0;
+    for (start, end) in corners.iter().cartesian_product(corners.iter()) {
+        let minx = start.0.min(end.0);
+        let maxx = start.0.max(end.0);
+        let miny = start.1.min(end.1);
+        let maxy = start.1.max(end.1);
+
+        if let Some(b) = rectangle_size(&points, &xvalues, &yvalues, minx, maxx, miny, maxy) {
+            best = best.max(b);
+        }
+    }
+
+    dbg!(best);
 }
