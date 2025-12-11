@@ -86,69 +86,98 @@ fn flood_fill<T: Clone, F: Fn(&Point, &T, &Point, &T) -> bool>(
     groups
 }
 
-fn find_smallers(light: u64, bits: usize, numbers: &Vec<u64>) -> usize {
-    let check_mask = (1 << bits) - 1;
+fn find_best(
+    joltage: Vec<i64>,
+    buttons: &Vec<Vec<i64>>,
+    pressed: usize,
+    cache: &mut HashMap<Vec<i64>, Option<usize>>,
+    winner: &mut usize,
+) -> Option<usize> {
+    if joltage.iter().all(|x| *x == 0) {
+        return Some(pressed);
+    } else if joltage.iter().any(|x| *x < 0) {
+        return None;
+    }
 
-    for i in 0..numbers.len() {
-        for comb in numbers.iter().combinations(i) {
-            let mut product = 0;
-            for mask in comb {
-                product ^= *mask;
-            }
-            if product & check_mask == light {
-                return i;
+    let minimal = pressed + *joltage.iter().max().unwrap() as usize;
+    if minimal >= *winner {
+        return None;
+    }
+
+    if let Some(best) = cache.get(&joltage) {
+        return *best;
+    }
+
+    let mut best = None;
+    for button in buttons {
+        let mut joltage2 = joltage.clone();
+        for b in button {
+            joltage2[*b as usize] -= 1;
+        }
+
+        if let Some(b) = find_best(joltage2, buttons, pressed + 1, cache, winner) {
+            if let Some(b2) = best {
+                if pressed == 0 && b2 < b {
+                    *winner = b.min(b2);
+                    println!("new winner: {}", *winner);
+                }
+                best = Some(b.min(b2));
+            } else {
+                if pressed == 0 {
+                    *winner = b;
+                    println!("new winner: {b}");
+                }
+                best = Some(b);
             }
         }
     }
 
-    unreachable!()
+    cache.insert(joltage, best);
+    if cache.len() % 1_000_000 == 0 {
+        dbg!(cache.len());
+    }
+    best
 }
 
 fn main() {
     let content = fs::read_to_string("input.txt").unwrap();
     let lines = content.lines().collect_vec();
 
-    let mut sum = 0;
     for line in lines {
         let parts = line.split_whitespace().collect_vec();
 
-        let light = parts[0]
-            .strip_prefix("[")
-            .unwrap()
-            .strip_suffix("]")
-            .unwrap()
-            .replace("#", "1")
-            .replace(".", "0")
-            .chars()
-            .rev()
-            .join("");
-        let bits = light.len();
-        let light = u64::from_str_radix(&light, 2).unwrap();
-
-        let numbers = parts
+        let buttons = parts
             .iter()
             .skip(1)
             .rev()
             .skip(1)
             .rev()
             .map(|part| {
-                let mut mask = 0u64;
-                for bit in part
-                    .strip_prefix("(")
+                part.strip_prefix("(")
                     .unwrap()
                     .strip_suffix(")")
                     .unwrap()
                     .split(",")
-                    .map(|n| n.parse::<u64>().unwrap())
-                {
-                    mask |= 1 << bit;
-                }
-                mask
+                    .map(|n| n.parse::<i64>().unwrap())
+                    .collect_vec()
             })
+            .sorted_by_key(|x| x.len())
+            .rev()
             .collect_vec();
 
-        sum += find_smallers(light, bits, &numbers);
-    }
+        let joltage = parts
+            .last()
+            .unwrap()
+            .strip_prefix("{")
+            .unwrap()
+            .strip_suffix("}")
+            .unwrap()
+            .split(",")
+            .map(|n| n.parse::<i64>().unwrap())
+            .collect_vec();
 
-    println!("{sum}");
+        let mut cache = HashMap::new();
+        let mut best = usize::MAX;
+        dbg!(find_best(joltage, &buttons, 0, &mut cache, &mut best));
+    }
 }
