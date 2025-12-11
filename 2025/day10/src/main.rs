@@ -1,150 +1,86 @@
-use core::num;
-use std::ops::{Add, Mul, Sub};
 #[allow(unused)]
 use std::{collections::HashMap, collections::HashSet, collections::VecDeque, fs};
 
 #[allow(unused)]
 use itertools::Itertools;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy)]
-struct Point(i64, i64);
-
-impl Add<Point> for Point {
-    type Output = Point;
-
-    fn add(self, rhs: Point) -> Self::Output {
-        Point(self.0 + rhs.0, self.1 + rhs.1)
-    }
-}
-
-impl Sub<Point> for Point {
-    type Output = Point;
-
-    fn sub(self, rhs: Point) -> Self::Output {
-        Point(self.0 - rhs.0, self.1 - rhs.1)
-    }
-}
-
-impl Mul<i64> for Point {
-    type Output = Point;
-
-    fn mul(self, rhs: i64) -> Self::Output {
-        Point(self.0 * rhs, self.1 * rhs)
-    }
-}
-
-#[allow(dead_code)]
-const MOVES: [Point; 4] = [Point(0, 1), Point(1, 0), Point(0, -1), Point(-1, 0)];
-
-#[allow(dead_code)]
-const MOVES_WITH_DIAGONAL: [Point; 8] = [
-    Point(0, 1),
-    Point(1, 0),
-    Point(0, -1),
-    Point(-1, 0),
-    Point(1, 1),
-    Point(1, -1),
-    Point(-1, 1),
-    Point(-1, -1),
-];
-
-#[allow(dead_code)]
-fn flood_fill<T: Clone, F: Fn(&Point, &T, &Point, &T) -> bool>(
-    map: &HashMap<Point, T>,
-    directions: &[Point],
-    predicate: F,
-) -> Vec<HashSet<Point>> {
-    let mut groups = Vec::new();
-    let mut visited = HashSet::new();
-
-    for (point, c) in map.iter() {
-        if visited.contains(point) {
-            continue;
-        }
-        visited.insert(*point);
-
-        let mut group = HashSet::from([*point]);
-        let mut queue = VecDeque::from([*point]);
-
-        while let Some(p) = queue.pop_front() {
-            for m in directions.iter() {
-                let next = p + *m;
-                if let Some(v) = map.get(&next)
-                    && predicate(&p, c, &next, v)
-                    && !visited.contains(&next)
-                {
-                    queue.push_back(next);
-                    group.insert(next);
-                    visited.insert(next);
-                }
-            }
-        }
-
-        groups.push(group);
-    }
-
-    groups
-}
-
-fn find_best(
-    joltage: Vec<i64>,
-    buttons: &Vec<Vec<i64>>,
-    pressed: usize,
-    cache: &mut HashMap<Vec<i64>, Option<usize>>,
-    winner: &mut usize,
-) -> Option<usize> {
+fn find_best(joltage: Vec<i64>, buttons: &Vec<Vec<i64>>, mut pressed: usize) -> Option<usize> {
     if joltage.iter().all(|x| *x == 0) {
         return Some(pressed);
     } else if joltage.iter().any(|x| *x < 0) {
         return None;
     }
 
-    let minimal = pressed + *joltage.iter().max().unwrap() as usize;
-    if minimal >= *winner {
-        return None;
-    }
+    let min_value = *joltage.iter().filter(|&&x| x > 0).min().unwrap();
+    let minimal_key = joltage.iter().position(|&x| x == min_value).unwrap() as i64;
 
-    if let Some(best) = cache.get(&joltage) {
-        return *best;
-    }
+    let buttons_with_min = buttons
+        .iter()
+        .filter(|&keys| keys.contains(&minimal_key))
+        .cloned()
+        .collect_vec();
+    let next_buttons = buttons
+        .iter()
+        .filter(|&kb| !buttons_with_min.contains(kb))
+        .cloned()
+        .collect_vec();
 
-    let mut best = None;
-    for button in buttons {
-        let mut joltage2 = joltage.clone();
-        for b in button {
-            joltage2[*b as usize] -= 1;
-        }
+    pressed += min_value as usize;
 
-        if let Some(b) = find_best(joltage2, buttons, pressed + 1, cache, winner) {
-            if let Some(b2) = best {
-                if pressed == 0 && b2 < b {
-                    *winner = b.min(b2);
-                    println!("new winner: {}", *winner);
-                }
-                best = Some(b.min(b2));
-            } else {
-                if pressed == 0 {
-                    *winner = b;
-                    println!("new winner: {b}");
-                }
-                best = Some(b);
+    let mut best: Option<usize> = None;
+    let combs = combination_k(min_value as _, buttons_with_min.len());
+    // println!(
+    //     "doing {min_value} at index {minimal_key} of {} combs with {} keyboards, next buttons: {}",
+    //     combs.len(),
+    //     buttons_with_min.len(),
+    //     next_buttons.len()
+    // );
+    for combination in combs {
+        let mut joltage = joltage.clone();
+        for (button, times) in buttons_with_min.iter().zip(combination) {
+            for b in button {
+                joltage[*b as usize] -= times;
             }
         }
+
+        if let Some(b) = find_best(joltage, &next_buttons, pressed) {
+            best = Some(best.unwrap_or_default().max(b));
+        }
     }
 
-    cache.insert(joltage, best);
-    if cache.len() % 1_000_000 == 0 {
-        dbg!(cache.len());
-    }
     best
 }
 
+fn combinations(values: Vec<i64>, n: usize, budget: usize, result: &mut Vec<Vec<i64>>) {
+    if n == 0 {
+        if budget == 0 {
+            result.push(values);
+        }
+        return;
+    }
+
+    for i in 0..=budget {
+        let mut values2 = values.clone();
+        values2.push(i as _);
+        combinations(values2, n - 1, budget - i, result);
+    }
+}
+
+fn combination_k(budget: usize, n: usize) -> Vec<Vec<i64>> {
+    let mut results = Vec::new();
+    combinations(Vec::new(), n, budget, &mut results);
+    results
+}
+
 fn main() {
+    dbg!(combination_k(50, 5).len());
+
     let content = fs::read_to_string("input.txt").unwrap();
     let lines = content.lines().collect_vec();
 
-    for line in lines {
+    for (lineno, line) in lines.iter().enumerate() {
         let parts = line.split_whitespace().collect_vec();
+        println!("{}: {}", lineno + 1, parts[0]);
 
         let buttons = parts
             .iter()
@@ -176,8 +112,6 @@ fn main() {
             .map(|n| n.parse::<i64>().unwrap())
             .collect_vec();
 
-        let mut cache = HashMap::new();
-        let mut best = usize::MAX;
-        dbg!(find_best(joltage, &buttons, 0, &mut cache, &mut best));
+        println!("best={}", find_best(joltage, &buttons, 0).unwrap());
     }
 }
