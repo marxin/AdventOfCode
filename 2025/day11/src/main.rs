@@ -104,22 +104,32 @@ fn main() {
     }
 
     let mut total: u64 = 0;
-    let mut workmap = HashMap::from([("out", 1)]);
-    let mut worklist = VecDeque::from(["out"]);
+    let mut workmap = HashMap::from([(("out", false, false), 1)]);
+    let mut worklist = VecDeque::from([("out", false, false)]);
 
-    while let Some(key) = worklist.pop_front() {
-        let times = workmap.remove(key).unwrap();
-        if key == "you" {
+    while let Some((key, mut dac, mut fft)) = worklist.pop_front() {
+        let times = workmap.remove(&(key, dac, fft)).unwrap();
+        if key == "svr" && dac && fft {
             total += times;
         } else if let Some(preds) = reverse_neighbors.get(key) {
             for pred in preds {
-                if workmap.contains_key(pred) {
-                    assert!(&worklist.contains(pred));
-                    *workmap.get_mut(pred).unwrap() += times;
+                match key {
+                    "dac" => {
+                        dac = true;
+                    }
+                    "fft" => {
+                        fft = true;
+                    }
+                    _ => {}
+                };
+                let pred_key = (*pred, dac, fft);
+                if workmap.contains_key(&pred_key) {
+                    assert!(&worklist.contains(&pred_key));
+                    *workmap.get_mut(&pred_key).unwrap() += times;
                 } else {
-                    assert!(!&worklist.contains(pred));
-                    workmap.insert(pred, times);
-                    worklist.push_back(pred);
+                    assert!(!&worklist.contains(&pred_key));
+                    workmap.insert(pred_key, times);
+                    worklist.push_back(pred_key);
                 }
             }
         }
